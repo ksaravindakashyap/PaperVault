@@ -61,10 +61,10 @@ export function DeletePaperButton({
           {isDeleting ? "Deleting..." : "Delete Paper"}
         </button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white text-gray-900 border border-gray-200 shadow-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Paper?</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogTitle className="text-gray-900">Delete Paper?</AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-600">
             This will permanently delete &ldquo;{paperTitle || "this paper"}&rdquo; and all its citations.
             The PDF file will also be removed from disk. This action cannot be undone.
           </AlertDialogDescription>

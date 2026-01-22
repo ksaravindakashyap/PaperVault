@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 
 const USER_ID_COOKIE = "papervault_user_id";
+const ACTIVE_WORKSPACE_COOKIE = "papervault_active_workspace";
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
@@ -90,4 +91,117 @@ export async function requireProjectAccess(
   }
 
   return { allowed: true, member, error: null };
+}
+
+export async function getActiveWorkspaceId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const workspaceId = cookieStore.get(ACTIVE_WORKSPACE_COOKIE)?.value;
+  return workspaceId || null;
+}
+
+export async function setActiveWorkspaceCookie(workspaceId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_WORKSPACE_COOKIE, workspaceId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    path: "/",
+  });
+}
+
+export async function getWorkspaceMember(
+  workspaceId: string,
+  userId: string | null
+) {
+  if (!userId) {
+    return null;
+  }
+
+  try {
+    const member = await db.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+    return member;
+  } catch (error) {
+    console.error("Failed to get workspace member:", error);
+    return null;
+  }
+}
+
+export async function requireWorkspaceAccess(
+  workspaceId: string,
+  userId: string | null,
+  requiredRole?: "OWNER" | "ADMIN" | "MEMBER"
+) {
+  const user = userId ? await getCurrentUser() : null;
+  if (!user) {
+    return { allowed: false, member: null, error: "Not authenticated" };
+  }
+
+  const member = await getWorkspaceMember(workspaceId, user.id);
+  if (!member) {
+    return { allowed: false, member: null, error: "Not a workspace member" };
+  }
+
+  if (requiredRole) {
+    const roleHierarchy = { OWNER: 3, ADMIN: 2, MEMBER: 1 };
+    const userRoleLevel = roleHierarchy[member.role];
+    const requiredRoleLevel = roleHierarchy[requiredRole];
+
+    if (userRoleLevel < requiredRoleLevel) {
+      return {
+        allowed: false,
+        member,
+        error: `Requires ${requiredRole} role`,
+      };
+    }
+  }
+
+  return { allowed: true, member, error: null };
+}
+
+export async function requireActiveWorkspace() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { hasWorkspace: false, workspaceId: null, redirect: "/onboarding" };
+  }
+
+  // Get user's workspace memberships
+  const memberships = await db.workspaceMember.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (memberships.length === 0) {
+    return { hasWorkspace: false, workspaceId: null, redirect: "/onboarding" };
+  }
+
+  // Check active workspace cookie
+  let activeWorkspaceId = await getActiveWorkspaceId();
+
+  // If no active workspace or invalid, set to newest membership
+  if (!activeWorkspaceId) {
+    activeWorkspaceId = memberships[0].workspaceId;
+    await setActiveWorkspaceCookie(activeWorkspaceId);
+  } else {
+    // Verify the active workspace is still valid
+    const isValid = memberships.some(
+      (m) => m.workspaceId === activeWorkspaceId
+    );
+    if (!isValid) {
+      activeWorkspaceId = memberships[0].workspaceId;
+      await setActiveWorkspaceCookie(activeWorkspaceId);
+    }
+  }
+
+  return { hasWorkspace: true, workspaceId: activeWorkspaceId, redirect: null };
 }

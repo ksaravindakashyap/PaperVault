@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={gowunBatang.className}>
+      <body className={gowunBatang.className} suppressHydrationWarning>
         {children}
         <Toaster />
       </body>

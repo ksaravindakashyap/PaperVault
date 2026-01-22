@@ -68,6 +68,26 @@ export const updateTodoSchema = z.object({
   status: TodoStatusEnum.optional(),
 });
 
+export const WorkspaceRoleEnum = z.enum(["OWNER", "ADMIN", "MEMBER"]);
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200, "Name must be less than 200 characters"),
+});
+
+export const createWorkspaceInviteSchema = z.object({
+  workspaceId: z.string().cuid(),
+  role: WorkspaceRoleEnum.optional(),
+  expiresInDays: z.number().int().min(1).max(365).optional(),
+});
+
+export const joinWorkspaceSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
+export const setActiveWorkspaceSchema = z.object({
+  workspaceId: z.string().cuid(),
+});
+
 export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 export function validatePdfFile(file: File): { valid: boolean; error?: string } {

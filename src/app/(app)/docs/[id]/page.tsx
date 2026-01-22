@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { DocTagsSection } from "./tags-section";
 
 interface Doc {
   id: string;
@@ -55,6 +56,7 @@ export default function DocDetailPage({ params }: { params: Promise<{ id: string
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
+  const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
 
   // Unwrap params
   useEffect(() => {
@@ -71,6 +73,7 @@ export default function DocDetailPage({ params }: { params: Promise<{ id: string
         setTitle(data.title);
         setContent(data.content);
         setComments(data.comments || []);
+        setTags(data.tags || []);
 
         // Check user role
         const userRes = await fetch("/api/me");
@@ -268,6 +271,13 @@ export default function DocDetailPage({ params }: { params: Promise<{ id: string
             )}
           </div>
         </div>
+
+        {/* Tags */}
+        <DocTagsSection
+          docId={docId}
+          initialTags={tags}
+          canEdit={canEdit}
+        />
 
         {/* Editor */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">

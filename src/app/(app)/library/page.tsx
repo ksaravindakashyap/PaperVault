@@ -243,10 +243,10 @@ export default function LibraryPage() {
       <UploadPaperModal isOpen={isModalOpen} onClose={handleModalClose} />
 
       <AlertDialog open={!!paperToDelete} onOpenChange={(open) => !open && setPaperToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white text-gray-900 border border-gray-200 shadow-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Paper?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-gray-900">Delete Paper?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
               This will permanently delete &ldquo;{paperToDelete?.title || paperToDelete?.originalFileName}&rdquo; and all its citations.
               This action cannot be undone.
             </AlertDialogDescription>

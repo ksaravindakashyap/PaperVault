@@ -49,6 +49,7 @@ model Paper {
   citedBy           Citation[] @relation("CitationTarget")
   projects          ProjectPaper[]
   docs              Doc[]
+  tags              PaperTag[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,6 +118,12 @@ enum ProjectRole {
   COMMENTER
 }
 
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
 enum TodoStatus {
   OPEN
   DONE
@@ -128,9 +135,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships ProjectMember[]
-  comments    Comment[]
-  auditEvents AuditEvent[]
+  memberships     ProjectMember[]
+  workspaceMembers WorkspaceMember[]
+  workspaceInvites WorkspaceInvite[]
+  comments        Comment[]
+  auditEvents     AuditEvent[]
 }
 
 model Project {
@@ -196,6 +205,7 @@ model Doc {
 
   comments  Comment[]
   events    AuditEvent[]
+  tags      DocTag[]
 
   @@index([projectId])
   @@index([paperId])
@@ -265,4 +275,85 @@ model ProjectPaper {
   @@unique([projectId, paperId])
   @@index([projectId])
   @@index([paperId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paperTags PaperTag[]
+  docTags   DocTag[]
+
+  @@index([name])
+}
+
+model PaperTag {
+  id      String @id @default(cuid())
+  paperId String
+  tagId   String
+
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, tagId])
+  @@index([paperId])
+  @@index([tagId])
+}
+
+model DocTag {
+  id    String @id @default(cuid())
+  docId String
+  tagId String
+
+  doc   Doc @relation(fields: [docId], references: [id], onDelete: Cascade)
+  tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, tagId])
+  @@index([docId])
+  @@index([tagId])
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members WorkspaceMember[]
+  invites WorkspaceInvite[]
+
+  @@index([name])
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvite {
+  id          String        @id @default(cuid())
+  token       String        @unique
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  expiresAt   DateTime
+  createdById String
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([expiresAt])
 }

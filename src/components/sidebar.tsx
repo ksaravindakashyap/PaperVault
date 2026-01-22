@@ -12,7 +12,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: "Library", href: "/library" },
   { name: "Projects", href: "/projects" },
-  { name: "Graph", href: "/graph", disabled: true },
+  { name: "Graph", href: "/graphs" },
   { name: "Manuscripts", href: "/manuscripts", disabled: true },
 ];
 
@@ -26,9 +26,9 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
   if (collapsed) {
     return (
       <aside className="h-full bg-white border-r border-gray-200 flex flex-col items-center py-4">
-        <div className="mb-4" title="PaperVault">
+        <Link href="/" className="mb-4" title="PaperVault">
           <span className="text-lg font-bold text-primary-600">PV</span>
-        </div>
+        </Link>
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => (
             <Link
@@ -60,12 +60,18 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
 
   return (
     <aside className="h-full bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6">
+      <Link href="/" className="p-6 hover:bg-gray-50 transition-colors cursor-pointer">
         <h1 className="text-2xl font-bold text-primary">PaperVault</h1>
-      </div>
+      </Link>
       <nav className="px-4 space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          // Special handling for Graph: active on /graphs or /projects/*/graph
+          let isActive = pathname.startsWith(item.href);
+          if (item.name === "Graph") {
+            isActive =
+              pathname === "/graphs" ||
+              (pathname.startsWith("/projects/") && pathname.endsWith("/graph"));
+          }
           return (
             <Link
               key={item.name}

@@ -10,7 +10,8 @@
     "worker": "tsx src/worker/process-papers.ts",
     "test:extract": "tsx src/scripts/test-extraction.ts",
     "smoke:title": "tsx src/scripts/smoke-title.ts",
-    "smoke:pdfjs": "tsx src/scripts/smoke-pdfjs.ts"
+    "smoke:pdfjs": "tsx src/scripts/smoke-pdfjs.ts",
+    "smoke:search": "tsx src/scripts/smoke-search.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
@@ -35,6 +36,7 @@
     "react-day-picker": "^9.13.0",
     "react-dom": "^19.0.0",
     "react-resizable-panels": "^4.4.1",
+    "reactflow": "^11.11.4",
     "tailwind-merge": "^3.4.0",
     "zod": "^3.24.1"
   },

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 import { SummaryEditor } from "./summary-editor";
 import { ProcessingPanel } from "./processing-panel";
 import { BibTeXDisplay } from "./bibtex-display";
@@ -9,6 +10,7 @@ import { AbstractCard } from "./abstract-card";
 import { PDFDownloadCard } from "./pdf-download-card";
 import { CitationsSection } from "./citations-section";
 import { DeletePaperButton } from "./delete-paper-button";
+import { TagsSection } from "./tags-section";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -19,11 +21,29 @@ export default async function PaperDetailPage({ params, searchParams }: PageProp
   const { id } = await params;
   const search = await searchParams;
   const fromPath = typeof search.from === 'string' ? search.from : '/library';
+  const user = await getCurrentUser();
+  
   const paper = await db.paper.findUnique({
     where: { id },
     include: {
       citations: {
         orderBy: [{ year: "desc" }, { title: "asc" }],
+      },
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+      projects: {
+        include: {
+          project: {
+            include: {
+              members: {
+                where: user ? { userId: user.id } : undefined,
+              },
+            },
+          },
+        },
       },
     },
   });
@@ -31,6 +51,28 @@ export default async function PaperDetailPage({ params, searchParams }: PageProp
   if (!paper) {
     notFound();
   }
+
+  // Check if user can edit tags
+  let canEditTags = false;
+  if (user) {
+    if (paper.projects.length === 0) {
+      // Paper not in any project - allow editing
+      canEditTags = true;
+    } else {
+      // Check if user has EDITOR/OWNER role in any project containing this paper
+      canEditTags = paper.projects.some(
+        (pp) =>
+          pp.project.members.length > 0 &&
+          (pp.project.members[0].role === "EDITOR" ||
+            pp.project.members[0].role === "OWNER")
+      );
+    }
+  }
+
+  const tags = paper.tags.map((pt) => ({
+    id: pt.tag.id,
+    name: pt.tag.name,
+  }));
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -151,6 +193,15 @@ export default async function PaperDetailPage({ params, searchParams }: PageProp
               fileName={paper.originalFileName}
             />
           </div>
+        </div>
+
+        {/* Tags */}
+        <div className="mt-6">
+          <TagsSection
+            paperId={paper.id}
+            initialTags={tags}
+            canEdit={canEditTags}
+          />
         </div>
 
         {/* BibTeX, Citations, and Summary */}

@@ -1,5 +1,6 @@
 import { CollapsibleLayout } from "@/components/collapsible-layout";
 import { UserInitProvider } from "@/components/user-init-provider";
+import { WorkspaceGuard } from "@/components/workspace-guard";
 
 export default function AppLayout({
   children,
@@ -8,7 +9,9 @@ export default function AppLayout({
 }) {
   return (
     <UserInitProvider>
-      <CollapsibleLayout>{children}</CollapsibleLayout>
+      <WorkspaceGuard>
+        <CollapsibleLayout>{children}</CollapsibleLayout>
+      </WorkspaceGuard>
     </UserInitProvider>
   );
 }

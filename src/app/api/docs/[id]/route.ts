@@ -32,6 +32,11 @@ export async function GET(
             title: true,
           },
         },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         comments: {
           include: {
             author: {
@@ -66,6 +71,10 @@ export async function GET(
       paper: doc.paper,
       createdBy: doc.createdBy,
       updatedBy: doc.updatedBy,
+      tags: doc.tags.map((dt) => ({
+        id: dt.tag.id,
+        name: dt.tag.name,
+      })),
       comments: doc.comments.map((c) => ({
         id: c.id,
         body: c.body,
