@@ -11,9 +11,9 @@ export default function DemoPaperDetailPage() {
   const searchParams = useSearchParams();
   const { id } = params;
   const { getPaper, getPaperTags, getCitations } = useDemo();
-  const [paper, setPaper] = useState<any>(null);
-  const [tags, setTags] = useState<any[]>([]);
-  const [citations, setCitations] = useState<any[]>([]);
+  const [paper, setPaper] = useState<{ id: string; title: string; status: string; venueType: string; year: number | null; abstract?: string; summary?: string; authors?: string; doi?: string; arxivId?: string; bibtex?: string } | null>(null);
+  const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
+  const [citations, setCitations] = useState<Array<{ id: string; raw: string; title?: string }>>([]);
 
   useEffect(() => {
     if (id && typeof id === "string") {

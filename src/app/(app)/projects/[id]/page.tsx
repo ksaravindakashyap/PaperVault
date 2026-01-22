@@ -118,7 +118,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           const membersRes = await fetch(`/api/projects/${projectId}/members`);
           if (membersRes.ok) {
             const members = await membersRes.json();
-            const member = members.find((m: any) => m.userId === userData.user.id);
+            const member = members.find((m: { userId: string; role: string }) => m.userId === userData.user.id);
             setCurrentUserRole(member?.role || null);
           }
         }
@@ -651,7 +651,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         Unassigned Papers ({nonReadingPapers.length})
                       </h3>
                       <p className="text-sm text-gray-600 mb-3">
-                        These papers haven't been assigned a reading status yet. Set their status to add them to your reading queue.
+                        These papers haven&apos;t been assigned a reading status yet. Set their status to add them to your reading queue.
                       </p>
                       <div className="space-y-2">
                         {nonReadingPapers.map((paper) => {

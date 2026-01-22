@@ -21,16 +21,15 @@ interface GraphNode {
   id: string;
   kind: "project" | "paper" | "tag";
   label: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 export default function DemoProjectGraphPage() {
   const params = useParams();
   const { id } = params;
-  const { getProject, getPapers, getPaperTags, getTags } = useDemo();
-  const [project, setProject] = useState<any>(null);
+  const { getProject, getPapers, getPaperTags } = useDemo();
+  const [project, setProject] = useState<{ id: string; name: string; description?: string; paperIds?: string[] } | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [showCitationEdges, setShowCitationEdges] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -48,7 +47,7 @@ export default function DemoProjectGraphPage() {
 
         // Build graph nodes
         const graphNodes: GraphNode[] = [];
-        const graphEdges: any[] = [];
+        const graphEdges: Array<{ id: string; source: string; target: string; kind: string }> = [];
 
         // Add project node
         graphNodes.push({
@@ -83,7 +82,7 @@ export default function DemoProjectGraphPage() {
         });
 
         // Add tag nodes and paper-tag edges
-        const allTags = new Map<string, any>();
+        const allTags = new Map<string, { id: string; name: string }>();
         projectPapers.forEach((paper) => {
           const paperTags = getPaperTags(paper.id);
           paperTags.forEach((tag) => {
@@ -111,8 +110,8 @@ export default function DemoProjectGraphPage() {
         // Convert to ReactFlow format
         const flowNodes: Node[] = graphNodes.map((node) => {
           let position = { x: 0, y: 0 };
-          let style: any = {};
-          let data: any = { label: node.label, kind: node.kind };
+          let style: Record<string, unknown> = {};
+          let data: Record<string, unknown> = { label: node.label, kind: node.kind };
 
           if (node.kind === "project") {
             position = { x: 400, y: 300 };
@@ -192,8 +191,8 @@ export default function DemoProjectGraphPage() {
         }
 
         const flowEdges: Edge[] = graphEdges.map((edge) => {
-          let style: any = {};
-          let animated = false;
+          let style: Record<string, unknown> = {};
+          const animated = false;
 
           if (edge.kind === "contains") {
             style = { stroke: "#f97316", strokeWidth: 2 };

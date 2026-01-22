@@ -10,9 +10,9 @@ export default function DemoDocDetailPage() {
   const params = useParams();
   const { id } = params;
   const { getDoc, getDocTags, getProject } = useDemo();
-  const [doc, setDoc] = useState<any>(null);
-  const [tags, setTags] = useState<any[]>([]);
-  const [project, setProject] = useState<any>(null);
+  const [doc, setDoc] = useState<{ id: string; title: string; content: string; projectId: string; updatedAt: string } | null>(null);
+  const [tags, setTags] = useState<Array<{ id: string; name: string }>>([]);
+  const [project, setProject] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (id && typeof id === "string") {

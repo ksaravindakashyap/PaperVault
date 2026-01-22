@@ -36,11 +36,13 @@ export async function GET(
       },
       include: {
         papers: {
+          where: {
+            paper: {
+              workspaceId: workspaceId,
+            },
+          },
           include: {
             paper: {
-              where: {
-                workspaceId: workspaceId,
-              },
               select: {
                 id: true,
                 title: true,

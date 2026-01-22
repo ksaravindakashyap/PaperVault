@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDemo } from "@/demo/demo-provider";
 import Link from "next/link";
-import { FileText, FolderOpen, List, BookOpen } from "lucide-react";
+import { FileText, List, BookOpen } from "lucide-react";
 import { Info } from "lucide-react";
 
 export default function DemoSearchPage() {
@@ -12,7 +12,7 @@ export default function DemoSearchPage() {
   const searchParams = useSearchParams();
   const { search } = useDemo();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Array<{ id: string; type: string; title: string; url: string; snippet?: string; tags?: string[] }>>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([
     "papers",
     "docs",

@@ -7,7 +7,7 @@ import { Info } from "lucide-react";
 
 export default function DemoLibraryPage() {
   const { getPapers, getPaperTags } = useDemo();
-  const [papers, setPapers] = useState<any[]>([]);
+  const [papers, setPapers] = useState<Array<{ id: string; title: string; venueType: string; year: number | null; status: string; tags?: string[] }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

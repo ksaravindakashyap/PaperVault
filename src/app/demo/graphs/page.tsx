@@ -6,16 +6,14 @@ import { Info } from "lucide-react";
 import Link from "next/link";
 
 export default function DemoGraphPage() {
-  const { getProjects, getPapers, getTags, getPaperTags } = useDemo();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [papers, setPapers] = useState<any[]>([]);
-  const [tags, setTags] = useState<any[]>([]);
+  const { getProjects, getPapers, getPaperTags } = useDemo();
+  const [projects, setProjects] = useState<Array<{ id: string; name: string; paperIds?: string[] }>>([]);
+  const [papers, setPapers] = useState<Array<{ id: string; title: string }>>([]);
 
   useEffect(() => {
     setProjects(getProjects());
     setPapers(getPapers());
-    setTags(getTags());
-  }, [getProjects, getPapers, getTags]);
+  }, [getProjects, getPapers]);
 
   return (
     <div className="p-8">

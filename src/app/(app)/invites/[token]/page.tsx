@@ -151,7 +151,7 @@ export default function InviteAcceptPage({ params }: { params: Promise<{ token: 
           </h1>
 
           <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-2">You've been invited to:</p>
+            <p className="text-sm text-gray-500 mb-2">You&apos;ve been invited to:</p>
             <h2 className="text-xl font-semibold text-gray-900 mb-1">
               {invite.project.name}
             </h2>

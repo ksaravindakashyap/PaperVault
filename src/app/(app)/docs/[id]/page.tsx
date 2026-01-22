@@ -82,7 +82,7 @@ export default function DocDetailPage({ params }: { params: Promise<{ id: string
           const membersRes = await fetch(`/api/projects/${data.projectId}/members`);
           if (membersRes.ok) {
             const members = await membersRes.json();
-            const member = members.find((m: any) => m.userId === userData.user.id);
+            const member = members.find((m: { userId: string; role: string }) => m.userId === userData.user.id);
             const role = member?.role || null;
             setCurrentUserRole(role);
             setCanEdit(role === "EDITOR" || role === "OWNER");

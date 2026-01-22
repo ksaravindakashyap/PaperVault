@@ -13,11 +13,10 @@ const READING_STATUSES = ["TO_READ", "SKIMMED", "DEEP_READ", "INTEGRATED"];
 export default function DemoProjectDetailPage() {
   const params = useParams();
   const { id } = params;
-  const { getProject, getPapers, getDocs, getTodos } = useDemo();
-  const [project, setProject] = useState<any>(null);
-  const [papers, setPapers] = useState<any[]>([]);
-  const [docs, setDocs] = useState<any[]>([]);
-  const [todos, setTodos] = useState<any[]>([]);
+  const { getProject, getPapers, getTodos } = useDemo();
+  const [project, setProject] = useState<{ id: string; name: string; description?: string; notes?: string; paperIds?: string[]; updatedAt: string } | null>(null);
+  const [papers, setPapers] = useState<Array<{ id: string; title: string; venueType: string; year: number | null; status: string; authors?: string }>>([]);
+  const [todos, setTodos] = useState<Array<{ id: string; title: string; dueDate: string; status: string; notes?: string }>>([]);
   const [todosFilter, setTodosFilter] = useState<"all" | "week">("all");
 
   useEffect(() => {
@@ -29,11 +28,10 @@ export default function DemoProjectDetailPage() {
         setPapers(
           allPapers.filter((p) => projectData.paperIds?.includes(p.id))
         );
-        setDocs(getDocs(id));
         setTodos(getTodos(id));
       }
     }
-  }, [id, getProject, getPapers, getDocs, getTodos]);
+  }, [id, getProject, getPapers, getTodos]);
 
   if (!project) {
     return (

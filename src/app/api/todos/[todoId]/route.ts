@@ -45,7 +45,7 @@ export async function PATCH(
     const validated = updateTodoSchema.parse(body);
 
     // Build update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updatedBy: user!.id,
     };
 

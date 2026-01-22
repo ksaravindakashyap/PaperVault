@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     // Search Papers
     if (types.includes("papers")) {
-      let paperWhere: any = {
+      let paperWhere: Record<string, unknown> = {
         workspaceId: workspaceId,
       };
 
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
       // Build query conditions
       if (query) {
-        const queryConditions: any[] = [];
+        const queryConditions: Array<Record<string, unknown>> = [];
         if (tokens.length > 0) {
           // Match if ANY token matches (OR across tokens)
           queryConditions.push(
@@ -186,9 +186,9 @@ export async function GET(request: NextRequest) {
       }
 
       if (yearFrom || yearTo) {
-        paperWhere.year = {};
-        if (yearFrom) paperWhere.year.gte = parseInt(yearFrom, 10);
-        if (yearTo) paperWhere.year.lte = parseInt(yearTo, 10);
+        paperWhere.year = {} as { gte?: number; lte?: number };
+        if (yearFrom) (paperWhere.year as { gte: number }).gte = parseInt(yearFrom, 10);
+        if (yearTo) (paperWhere.year as { lte: number }).lte = parseInt(yearTo, 10);
       }
 
       if (tag) {
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
 
     // Search Docs
     if (types.includes("docs")) {
-      let docWhere: any = {
+      const docWhere: Record<string, unknown> = {
         workspaceId: workspaceId,
       };
 
@@ -305,7 +305,7 @@ export async function GET(request: NextRequest) {
 
     // Search Todos
     if (types.includes("todos")) {
-      let todoWhere: any = {
+      const todoWhere: Record<string, unknown> = {
         workspaceId: workspaceId,
       };
 
@@ -357,7 +357,7 @@ export async function GET(request: NextRequest) {
 
     // Search Citations
     if (types.includes("citations")) {
-      let citationWhere: any = {
+      const citationWhere: Record<string, unknown> = {
         workspaceId: workspaceId,
       };
 

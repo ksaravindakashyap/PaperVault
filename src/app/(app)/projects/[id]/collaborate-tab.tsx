@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Copy, Check, Trash2, Edit2 } from "lucide-react";
+import { Plus, Copy, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -56,7 +56,7 @@ interface ActivityEvent {
   action: string;
   actor: { id: string; name: string };
   doc: { id: string; title: string } | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -390,7 +390,7 @@ export function CollaborateTab({ projectId, currentUserRole }: CollaborateTabPro
                   <span className="font-medium">{event.actor.name}</span>{" "}
                   {event.action.replace(/_/g, " ").toLowerCase()}
                   {event.doc && (
-                    <span className="text-gray-600"> on "{event.doc.title}"</span>
+                    <span className="text-gray-600"> on &ldquo;{event.doc.title}&rdquo;</span>
                   )}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">

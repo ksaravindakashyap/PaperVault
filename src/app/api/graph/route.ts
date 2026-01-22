@@ -51,22 +51,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get papers in project
-    const projectPapers = await db.projectPaper.findMany({
+    // Get papers in project (filter by workspace at the top level)
+    const allProjectPapers = await db.projectPaper.findMany({
       where: { projectId },
       include: {
         paper: {
-          where: {
-            workspaceId: workspaceId,
-          },
           include: {
             tags: {
               include: {
-                tag: {
-                  where: {
-                    workspaceId: workspaceId,
-                  },
-                },
+                tag: true,
               },
             },
             citations: {
@@ -92,11 +85,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Filter to only papers in the active workspace
+    const projectPapers = allProjectPapers.filter(
+      (pp) => pp.paper && pp.paper.workspaceId === workspaceId
+    );
+
     const nodes: Array<{
       id: string;
       kind: "project" | "paper" | "tag";
       label: string;
-      meta?: any;
+      meta?: Record<string, unknown>;
     }> = [];
 
     const edges: Array<{
@@ -147,15 +145,17 @@ export async function GET(request: NextRequest) {
         kind: "contains",
       });
 
-      // Add paper -> tag edges
+      // Add paper -> tag edges (only tags in the active workspace)
       for (const paperTag of paper.tags) {
-        tagIds.add(paperTag.tag.id);
-        edges.push({
-          id: `paper-${paper.id}-tag-${paperTag.tag.id}`,
-          source: paper.id,
-          target: paperTag.tag.id,
-          kind: "tagged",
-        });
+        if (paperTag.tag.workspaceId === workspaceId) {
+          tagIds.add(paperTag.tag.id);
+          edges.push({
+            id: `paper-${paper.id}-tag-${paperTag.tag.id}`,
+            source: paper.id,
+            target: paperTag.tag.id,
+            kind: "tagged",
+          });
+        }
       }
 
       // Add paper -> paper citation edges (if target is also in project)
@@ -177,12 +177,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add tag nodes
+    // Add tag nodes (only from active workspace)
     const tags = await db.tag.findMany({
       where: {
         id: {
           in: Array.from(tagIds),
         },
+        workspaceId: workspaceId,
       },
     });
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, FileText, Document, CheckSquare, Link as LinkIcon } from "lucide-react";
+import { Search, FileText, CheckSquare, Link as LinkIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -117,7 +117,7 @@ export default function SearchPage() {
       case "paper":
         return <FileText className="w-4 h-4" />;
       case "doc":
-        return <Document className="w-4 h-4" />;
+        return <FileText className="w-4 h-4" />;
       case "todo":
         return <CheckSquare className="w-4 h-4" />;
       case "citation":

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
 import ReactFlow, {
@@ -21,7 +21,7 @@ interface GraphNode {
   id: string;
   kind: "project" | "paper" | "tag";
   label: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 interface GraphEdge {
@@ -38,7 +38,6 @@ interface GraphData {
 
 export default function ProjectGraphPage() {
   const params = useParams();
-  const router = useRouter();
   const projectId = params.id as string;
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [projectName, setProjectName] = useState<string>("");
@@ -90,8 +89,8 @@ export default function ProjectGraphPage() {
 
     const flowNodes: Node[] = graphData.nodes.map((node) => {
       let position = { x: 0, y: 0 };
-      let style: any = {};
-      let data: any = { label: node.label, kind: node.kind };
+      let style: Record<string, unknown> = {};
+      let data: Record<string, unknown> = { label: node.label, kind: node.kind };
 
       if (node.kind === "project") {
         position = { x: 400, y: 300 };
@@ -182,7 +181,7 @@ export default function ProjectGraphPage() {
         return true;
       })
       .map((edge) => {
-        let style: any = {};
+        let style: Record<string, unknown> = {};
         let animated = false;
 
         if (edge.kind === "contains") {
@@ -306,13 +305,13 @@ export default function ProjectGraphPage() {
                   {selectedNode.meta.venueType && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Venue</p>
-                      <p className="text-gray-900">{selectedNode.meta.venueType}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.venueType)}</p>
                     </div>
                   )}
                   {selectedNode.meta.year && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Year</p>
-                      <p className="text-gray-900">{selectedNode.meta.year}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.year)}</p>
                     </div>
                   )}
                   <Button asChild className="w-full">
@@ -325,12 +324,12 @@ export default function ProjectGraphPage() {
                   {selectedNode.meta.description && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Description</p>
-                      <p className="text-gray-900">{selectedNode.meta.description}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.description)}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Papers</p>
-                    <p className="text-gray-900">{selectedNode.meta.paperCount || 0}</p>
+                    <p className="text-gray-900">{String(selectedNode.meta.paperCount || 0)}</p>
                   </div>
                   <Button asChild className="w-full">
                     <Link href={`/projects/${selectedNode.id}`}>Open Project</Link>

@@ -7,7 +7,7 @@ import { Info } from "lucide-react";
 
 export default function DemoProjectsPage() {
   const { getProjects } = useDemo();
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string; description?: string; paperIds?: string[]; docIds?: string[]; todoIds?: string[]; updatedAt: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

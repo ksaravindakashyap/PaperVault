@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireWorkspaceAccess } from "@/lib/auth";
+import { getCurrentUser, requireWorkspaceAccess, setUserIdCookie } from "@/lib/auth";
 import { createWorkspaceInviteSchema } from "@/lib/validators";
 import { randomBytes } from "crypto";
 

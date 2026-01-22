@@ -182,7 +182,7 @@ export async function requireActiveWorkspace() {
   }
 
   // Get user's workspace memberships
-  let memberships = await db.workspaceMember.findMany({
+  const memberships = await db.workspaceMember.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });

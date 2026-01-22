@@ -47,7 +47,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get("scope") || "week";
 
-    let whereClause: any = { projectId: id };
+    const whereClause: Record<string, unknown> = { projectId: id };
 
     if (scope === "week") {
       const { start, end } = getWeekBounds();
