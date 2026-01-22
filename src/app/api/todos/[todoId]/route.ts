@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, setUserIdCookie } from "@/lib/auth";
 import { updateTodoSchema } from "@/lib/validators";
 
 // PATCH /api/todos/[todoId]
@@ -9,7 +9,17 @@ export async function PATCH(
   { params }: { params: Promise<{ todoId: string }> }
 ) {
   const { todoId } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
   try {
     // Get todo to find project
@@ -101,7 +111,17 @@ export async function DELETE(
   { params }: { params: Promise<{ todoId: string }> }
 ) {
   const { todoId } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
   try {
     // Get todo to find project

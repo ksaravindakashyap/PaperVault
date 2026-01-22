@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { WorkspaceSwitcherDialog } from "@/components/workspace-switcher-dialog";
+import { Button } from "@/components/ui/button";
 
 interface NavItem {
   name: string;
@@ -9,12 +12,15 @@ interface NavItem {
   disabled?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { name: "Library", href: "/library" },
-  { name: "Projects", href: "/projects" },
-  { name: "Graph", href: "/graphs" },
-  { name: "Manuscripts", href: "/manuscripts", disabled: true },
-];
+const getNavItems = (isDemo: boolean) => {
+  const prefix = isDemo ? "/demo" : "";
+  return [
+    { name: "Library", href: `${prefix}/library` },
+    { name: "Projects", href: `${prefix}/projects` },
+    { name: "Graph", href: `${prefix}/graphs` },
+    { name: "Manuscripts", href: `${prefix}/manuscripts`, disabled: true },
+  ];
+};
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -22,6 +28,9 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
+  const [isWorkspaceDialogOpen, setIsWorkspaceDialogOpen] = useState(false);
+  const isDemo = pathname.startsWith("/demo");
+  const navItems = getNavItems(isDemo);
 
   if (collapsed) {
     return (
@@ -59,40 +68,57 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
   }
 
   return (
-    <aside className="h-full bg-white border-r border-gray-200 flex flex-col">
-      <Link href="/" className="p-6 hover:bg-gray-50 transition-colors cursor-pointer">
-        <h1 className="text-2xl font-bold text-primary">PaperVault</h1>
-      </Link>
-      <nav className="px-4 space-y-1">
-        {navItems.map((item) => {
-          // Special handling for Graph: active on /graphs or /projects/*/graph
-          let isActive = pathname.startsWith(item.href);
-          if (item.name === "Graph") {
-            isActive =
-              pathname === "/graphs" ||
-              (pathname.startsWith("/projects/") && pathname.endsWith("/graph"));
-          }
-          return (
-            <Link
-              key={item.name}
-              href={item.disabled ? "#" : item.href}
-              className={`
-                block px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                ${
-                  item.disabled
-                    ? "text-gray-400 cursor-not-allowed"
-                    : isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                }
-              `}
-              onClick={(e) => item.disabled && e.preventDefault()}
+    <>
+      <aside className="h-full bg-white border-r border-gray-200 flex flex-col">
+        <Link href="/" className="p-6 hover:bg-gray-50 transition-colors cursor-pointer">
+          <h1 className="text-2xl font-bold text-primary">PaperVault</h1>
+        </Link>
+        <nav className="px-4 space-y-1 flex-1">
+          {navItems.map((item) => {
+            // Special handling for Graph: active on /graphs or /projects/*/graph
+            let isActive = pathname.startsWith(item.href);
+            if (item.name === "Graph") {
+              const graphPath = isDemo ? "/demo/graphs" : "/graphs";
+              isActive =
+                pathname === graphPath ||
+                (pathname.startsWith(isDemo ? "/demo/projects/" : "/projects/") && pathname.endsWith("/graph"));
+            }
+            return (
+              <Link
+                key={item.name}
+                href={item.disabled ? "#" : item.href}
+                className={`
+                  block px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${
+                    item.disabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : isActive
+                        ? "bg-primary-50 text-primary-700"
+                        : "text-gray-700 hover:bg-gray-100"
+                  }
+                `}
+                onClick={(e) => item.disabled && e.preventDefault()}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+        {!isDemo && (
+          <div className="p-4 border-t border-gray-200">
+            <Button
+              onClick={() => setIsWorkspaceDialogOpen(true)}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
             >
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+              Change Workspace
+            </Button>
+          </div>
+        )}
+      </aside>
+      <WorkspaceSwitcherDialog
+        open={isWorkspaceDialogOpen}
+        onOpenChange={setIsWorkspaceDialogOpen}
+      />
+    </>
   );
 }

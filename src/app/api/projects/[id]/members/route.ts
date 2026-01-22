@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, setUserIdCookie } from "@/lib/auth";
 import { z } from "zod";
 
 const ProjectRoleEnum = z.enum(["OWNER", "EDITOR", "COMMENTER"]);
@@ -16,7 +16,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
   const access = await requireProjectAccess(id, user?.id || null);
   if (!access.allowed) {
@@ -64,9 +74,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
-  const access = await requireProjectAccess(id, user?.id || null, "OWNER");
+  const access = await requireProjectAccess(id, user.id, "OWNER");
   if (!access.allowed) {
     return NextResponse.json({ error: access.error }, { status: 403 });
   }

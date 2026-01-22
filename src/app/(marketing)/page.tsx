@@ -78,26 +78,24 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
-                <Link href="/library">
+                <Link href="/download">
                   <Button
                     size="lg"
                     className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8"
                   >
-                    Open Library
+                    Download Software
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-8 border-gray-300"
-                  onClick={() => {
-                    const element = document.getElementById("features");
-                    element?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  View Features
-                </Button>
+                <Link href="/demo/library">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-lg px-8 border-gray-300"
+                  >
+                    View Demo
+                  </Button>
+                </Link>
               </motion.div>
             </motion.div>
 
@@ -162,7 +160,7 @@ export default function LandingPage() {
                     <div className="mt-3 text-xs text-gray-500">
                       <div className="flex justify-between">
                         <span>15 references found</span>
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <CheckCircle2 className="w-4 h-4 text-orange-500" />
                       </div>
                     </div>
                   </div>
@@ -282,7 +280,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Collaboration (Coming Next) */}
+      {/* Desktop Software Coming Soon */}
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -292,51 +290,62 @@ export default function LandingPage() {
             className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-200 rounded-2xl p-8 md:p-12"
           >
             <div className="flex items-start gap-4 mb-6">
-              <Users className="w-10 h-10 text-orange-600 flex-shrink-0" />
+              <svg
+                className="w-10 h-10 text-orange-600 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <h2 className="text-3xl font-bold text-gray-900">
-                    Collaboration for labs
+                    Desktop software coming soon
                   </h2>
                   <span className="px-3 py-1 bg-orange-200 text-orange-800 text-sm font-semibold rounded-full">
-                    Planned (Step 4)
+                    In Development
                   </span>
                 </div>
                 <p className="text-lg text-gray-700 mb-6">
-                  Turn research into a team sport with collaborative features built
-                  for labs.
+                  A native desktop application for Windows, macOS, and Linux with enhanced local-first capabilities.
                 </p>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <GitBranch className="w-5 h-5 text-orange-600 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-orange-600 mt-0.5" />
                     <div>
                       <span className="font-semibold text-gray-900">
-                        Share projects with teammates
+                        Local-first architecture
                       </span>
                       <p className="text-gray-600 text-sm">
-                        Invite lab members to shared workspaces
+                        Full offline support — your data stays on your machine
                       </p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <MessageSquare className="w-5 h-5 text-orange-600 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-orange-600 mt-0.5" />
                     <div>
                       <span className="font-semibold text-gray-900">
-                        Collaborative notes (Google-doc-like)
+                        Built-in PDF viewer
                       </span>
                       <p className="text-gray-600 text-sm">
-                        Real-time editing on research summaries
+                        Read and annotate papers directly within the app
                       </p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <FileOutput className="w-5 h-5 text-orange-600 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-orange-600 mt-0.5" />
                     <div>
                       <span className="font-semibold text-gray-900">
-                        Commenting + audit trail
+                        Enhanced performance
                       </span>
                       <p className="text-gray-600 text-sm">
-                        Track who added what, when, and why
+                        Faster processing and search with native system integration
                       </p>
                     </div>
                   </li>
@@ -460,23 +469,13 @@ export default function LandingPage() {
                 </div>
 
                 <a
-                  href="https://linkedin.com/in/your-handle"
+                  href="https://linkedin.com/in/ksaravindakashyap"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-700 hover:text-orange-500 transition-colors"
                 >
                   <Linkedin className="w-5 h-5 text-orange-500" />
-                  linkedin.com/in/your-handle
-                </a>
-
-                <a
-                  href="https://github.com/your-handle"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-700 hover:text-orange-500 transition-colors"
-                >
-                  <Github className="w-5 h-5 text-orange-500" />
-                  github.com/your-handle
+                  linkedin.com/in/ksaravindakashyap
                 </a>
               </div>
             </div>
@@ -496,17 +495,28 @@ export default function LandingPage() {
               Ready to organize your research?
             </h2>
             <p className="text-xl text-orange-100 mb-8">
-              Start using PaperVault today—no signup required
+              Try the demo or download the desktop app
             </p>
-            <Link href="/library">
-              <Button
-                size="lg"
-                className="bg-white text-orange-500 hover:bg-gray-100 text-lg px-8"
-              >
-                Open Library
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/download">
+                <Button
+                  size="lg"
+                  className="bg-white text-orange-500 hover:bg-gray-100 text-lg px-8"
+                >
+                  Download Software
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/demo/library">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-transparent border-white text-white hover:bg-white/10 text-lg px-8"
+                >
+                  View Demo
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>

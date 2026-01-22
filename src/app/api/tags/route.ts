@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { z } from "zod";
 
 const createTagSchema = z.object({
@@ -10,11 +10,24 @@ const createTagSchema = z.object({
 // GET /api/tags?q=prefix
 export async function GET(request: NextRequest) {
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
+
+    const workspaceId = await requireActiveWorkspaceId();
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
 
     const tags = await db.tag.findMany({
       where: {
+        workspaceId: workspaceId,
         name: {
           contains: query,
         },
@@ -26,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      tags.map((tag) => ({
+      tags.map((tag: { id: string; name: string }) => ({
         id: tag.id,
         name: tag.name,
       }))
@@ -42,21 +55,34 @@ export async function GET(request: NextRequest) {
 
 // POST /api/tags
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
+
     const body = await request.json();
     const validated = createTagSchema.parse(body);
+
+    const workspaceId = await requireActiveWorkspaceId();
 
     // Normalize tag name (lowercase, trim)
     const normalizedName = validated.name.trim().toLowerCase();
 
-    // Check if tag already exists
+    // Check if tag already exists in this workspace
     const existing = await db.tag.findUnique({
-      where: { name: normalizedName },
+      where: {
+        workspaceId_name: {
+          workspaceId: workspaceId,
+          name: normalizedName,
+        },
+      },
     });
 
     if (existing) {
@@ -69,6 +95,7 @@ export async function POST(request: NextRequest) {
     // Create new tag
     const tag = await db.tag.create({
       data: {
+        workspaceId: workspaceId,
         name: normalizedName,
       },
     });

@@ -4,7 +4,6 @@ import { useState, KeyboardEvent, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -20,7 +19,7 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
 
   // Sync search query from URL when on search page
   useEffect(() => {
-    if (pathname === "/search") {
+    if (pathname === "/search" || pathname === "/demo/search") {
       const urlQuery = searchParams.get("q") || "";
       setSearchQuery(urlQuery);
     }
@@ -44,6 +43,12 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
   };
 
   useEffect(() => {
+    // Don't load workspace name in demo mode
+    if (pathname.startsWith("/demo")) {
+      setWorkspaceName(null);
+      return;
+    }
+    
     loadWorkspaceName();
     
     // Listen for workspace changes
@@ -61,17 +66,20 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
     if (e.key === "Enter") {
       e.preventDefault();
       const trimmed = searchQuery.trim();
+      const isDemo = pathname.startsWith("/demo");
+      const searchPath = isDemo ? "/demo/search" : "/search";
+      
       if (trimmed) {
-        if (pathname === "/search") {
+        if (pathname === searchPath || pathname === "/search" || pathname === "/demo/search") {
           // Already on search page, update query
-          router.replace(`/search?q=${encodeURIComponent(trimmed)}`);
+          router.replace(`${searchPath}?q=${encodeURIComponent(trimmed)}`);
         } else {
           // Navigate to search page
-          router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+          router.push(`${searchPath}?q=${encodeURIComponent(trimmed)}`);
         }
       } else {
         // Empty query, just go to search page
-        router.push("/search");
+        router.push(searchPath);
       }
     }
   };
@@ -110,14 +118,11 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
             </svg>
           </button>
         )}
-        <div className="flex items-center gap-3">
-          <WorkspaceSwitcher />
-          {workspaceName && (
-            <h2 className="text-lg font-semibold text-gray-800">
-              {workspaceName} Workspace
-            </h2>
-          )}
-        </div>
+        {workspaceName && (
+          <h2 className="text-lg font-semibold text-gray-800">
+            {workspaceName} Workspace
+          </h2>
+        )}
       </div>
       <div className="flex-1 max-w-md">
         <div className="relative">

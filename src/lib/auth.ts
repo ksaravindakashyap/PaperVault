@@ -170,19 +170,38 @@ export async function requireWorkspaceAccess(
 }
 
 export async function requireActiveWorkspace() {
-  const user = await getCurrentUser();
+  // Get or create local user
+  let user = await getCurrentUser();
   if (!user) {
-    return { hasWorkspace: false, workspaceId: null, redirect: "/onboarding" };
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
   }
 
   // Get user's workspace memberships
-  const memberships = await db.workspaceMember.findMany({
+  let memberships = await db.workspaceMember.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });
 
+  // If no workspaces, create a default one
   if (memberships.length === 0) {
-    return { hasWorkspace: false, workspaceId: null, redirect: "/onboarding" };
+    const defaultWorkspace = await db.workspace.create({
+      data: {
+        name: "Default Workspace",
+        members: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
+      },
+    });
+    await setActiveWorkspaceCookie(defaultWorkspace.id);
+    return { hasWorkspace: true, workspaceId: defaultWorkspace.id, redirect: null };
   }
 
   // Check active workspace cookie
@@ -204,4 +223,13 @@ export async function requireActiveWorkspace() {
   }
 
   return { hasWorkspace: true, workspaceId: activeWorkspaceId, redirect: null };
+}
+
+// Helper to get active workspace ID for API routes (throws if not available)
+export async function requireActiveWorkspaceId(): Promise<string> {
+  const result = await requireActiveWorkspace();
+  if (!result.hasWorkspace || !result.workspaceId) {
+    throw new Error("No active workspace");
+  }
+  return result.workspaceId;
 }

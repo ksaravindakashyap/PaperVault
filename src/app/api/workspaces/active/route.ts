@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, setActiveWorkspaceCookie, getWorkspaceMember } from "@/lib/auth";
+import { getCurrentUser, setActiveWorkspaceCookie, getWorkspaceMember, setUserIdCookie } from "@/lib/auth";
 import { setActiveWorkspaceSchema } from "@/lib/validators";
 
 // POST /api/workspaces/active
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
+  // Get or create local user
+  let user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
   }
 
   try {

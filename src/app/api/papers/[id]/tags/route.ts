@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { z } from "zod";
 
 const addTagSchema = z.object({
@@ -16,10 +16,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: paperId } = await params;
-  const user = await getCurrentUser();
-
+  
+  // Get or create local user
+  let user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
   }
 
   try {
@@ -43,6 +49,16 @@ export async function POST(
 
     if (!paper) {
       return NextResponse.json({ error: "Paper not found" }, { status: 404 });
+    }
+
+    const workspaceId = await requireActiveWorkspaceId();
+
+    // Verify paper is in active workspace
+    if (paper.workspaceId !== workspaceId) {
+      return NextResponse.json(
+        { error: "Paper not in active workspace" },
+        { status: 403 }
+      );
     }
 
     // If paper is in projects, require EDITOR/OWNER role
@@ -72,11 +88,26 @@ export async function POST(
       if (!tag) {
         return NextResponse.json({ error: "Tag not found" }, { status: 404 });
       }
+      if (tag.workspaceId !== workspaceId) {
+        return NextResponse.json(
+          { error: "Tag not in active workspace" },
+          { status: 403 }
+        );
+      }
     } else if (validated.tagName) {
       const normalizedName = validated.tagName.trim().toLowerCase();
-      tag = await db.tag.findUnique({ where: { name: normalizedName } });
+      tag = await db.tag.findUnique({
+        where: {
+          workspaceId_name: {
+            workspaceId: workspaceId,
+            name: normalizedName,
+          },
+        },
+      });
       if (!tag) {
-        tag = await db.tag.create({ data: { name: normalizedName } });
+        tag = await db.tag.create({
+          data: { workspaceId: workspaceId, name: normalizedName },
+        });
       }
     } else {
       return NextResponse.json(

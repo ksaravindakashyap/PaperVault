@@ -2,9 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writePdf } from "@/lib/storage";
 import { VenueTypeEnum, validatePdfFile } from "@/lib/validators";
+import { getCurrentUser, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
+
+    const workspaceId = await requireActiveWorkspaceId();
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const venueType = formData.get("venueType") as string | null;
@@ -49,6 +63,7 @@ export async function POST(request: NextRequest) {
         venueType: venueTypeValidation.data,
         fileKey: "", // Will be updated after file write
         status: "PROCESSING",
+        workspaceId: workspaceId,
       },
     });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { addPaperToProjectSchema } from "@/lib/validators";
 
 // POST /api/projects/[id]/papers - Add paper to project
@@ -9,9 +9,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
-  const access = await requireProjectAccess(id, user?.id || null, "EDITOR");
+  const access = await requireProjectAccess(id, user.id, "EDITOR");
   if (!access.allowed) {
     return NextResponse.json({ error: access.error }, { status: 403 });
   }
@@ -20,18 +30,26 @@ export async function POST(
     const body = await request.json();
     const validated = addPaperToProjectSchema.parse(body);
 
-    // Check if project exists
+    const workspaceId = await requireActiveWorkspaceId();
+
+    // Check if project exists and is in active workspace
     const project = await db.project.findUnique({
-      where: { id },
+      where: { 
+        id,
+        workspaceId: workspaceId,
+      },
     });
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Check if paper exists
+    // Check if paper exists and is in active workspace
     const paper = await db.paper.findUnique({
-      where: { id: validated.paperId },
+      where: { 
+        id: validated.paperId,
+        workspaceId: workspaceId,
+      },
     });
 
     if (!paper) {

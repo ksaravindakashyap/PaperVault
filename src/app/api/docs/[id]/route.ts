@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, setUserIdCookie } from "@/lib/auth";
 import { z } from "zod";
 
 const updateDocSchema = z.object({
@@ -14,7 +14,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
   try {
     const doc = await db.doc.findUnique({
@@ -56,7 +66,7 @@ export async function GET(
     }
 
     // Check access
-    const access = await requireProjectAccess(doc.projectId, user?.id || null);
+    const access = await requireProjectAccess(doc.projectId, user.id);
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
@@ -102,7 +112,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
   try {
     const doc = await db.doc.findUnique({
@@ -116,7 +136,7 @@ export async function PATCH(
     // Check access (EDITOR or OWNER)
     const access = await requireProjectAccess(
       doc.projectId,
-      user?.id || null,
+      user.id,
       "EDITOR"
     );
     if (!access.allowed) {

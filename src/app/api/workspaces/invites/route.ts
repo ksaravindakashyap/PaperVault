@@ -6,9 +6,15 @@ import { randomBytes } from "crypto";
 
 // POST /api/workspaces/invites
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
+  // Get or create local user
+  let user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
   }
 
   try {

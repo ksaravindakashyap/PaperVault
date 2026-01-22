@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { z } from "zod";
 
 const createDocSchema = z.object({
@@ -66,9 +66,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
-  const access = await requireProjectAccess(id, user?.id || null, "EDITOR");
+  const access = await requireProjectAccess(id, user.id, "EDITOR");
   if (!access.allowed) {
     return NextResponse.json({ error: access.error }, { status: 403 });
   }
@@ -96,9 +106,23 @@ export async function POST(
       }
     }
 
+    // Get workspaceId from project
+    const project = await db.project.findUnique({
+      where: { id },
+      select: { workspaceId: true },
+    });
+
+    if (!project || !project.workspaceId) {
+      return NextResponse.json(
+        { error: "Project not found or has no workspace" },
+        { status: 404 }
+      );
+    }
+
     // Create doc
     const doc = await db.doc.create({
       data: {
+        workspaceId: project.workspaceId,
         projectId: id,
         paperId: validated.paperId || null,
         title: validated.title,

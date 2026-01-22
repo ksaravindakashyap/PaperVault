@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { extractCitationsFromPDF } from "@/lib/extraction/citations";
 import { resolveCitationTargets } from "@/lib/extraction/citationResolver";
 
@@ -9,15 +10,34 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
+
     const { id } = await context.params;
+    const workspaceId = await requireActiveWorkspaceId();
 
     // Look up paper
     const paper = await db.paper.findUnique({
-      where: { id },
+      where: { 
+        id,
+        workspaceId: workspaceId,
+      },
+      select: { workspaceId: true, fileKey: true },
     });
 
-    if (!paper) {
-      return NextResponse.json({ error: "Paper not found" }, { status: 404 });
+    if (!paper || !paper.workspaceId) {
+      return NextResponse.json(
+        { error: "Paper not found or not in active workspace" },
+        { status: 404 }
+      );
     }
 
     // Extract citations using pdf-parse
@@ -66,6 +86,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // Insert new citations
     await db.citation.createMany({
       data: resolved.map((c) => ({
+        workspaceId: paper.workspaceId!,
         sourcePaperId: id,
         raw: c.raw,
         title: c.title,

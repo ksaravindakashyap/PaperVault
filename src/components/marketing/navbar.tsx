@@ -71,9 +71,9 @@ export function MarketingNavbar() {
             >
               Contact
             </button>
-            <Link href="/library">
+            <Link href="/demo/library">
               <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-                Open App
+                View Demo
               </Button>
             </Link>
           </div>
@@ -118,9 +118,9 @@ export function MarketingNavbar() {
               Contact
             </button>
             <div className="px-4 pt-2">
-              <Link href="/library" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/demo/library" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
-                  Open App
+                  View Demo
                 </Button>
               </Link>
             </div>

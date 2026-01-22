@@ -16,6 +16,7 @@ model Paper {
   originalFileName String
   venueType        VenueType
   status           PaperStatus @default(PROCESSING)
+  workspaceId      String
 
   title     String?
   authors   String? // raw string for now
@@ -45,6 +46,7 @@ model Paper {
   citationsScannedPages String? // e.g., "1,2,3,4,5" for debug/display
   
   // Relations
+  workspace         Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   citations         Citation[] @relation("SourcePaper")
   citedBy           Citation[] @relation("CitationTarget")
   projects          ProjectPaper[]
@@ -54,6 +56,7 @@ model Paper {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([workspaceId])
   @@index([status, processingLockedAt])
   @@index([createdAt])
   @@index([doi])
@@ -62,6 +65,7 @@ model Paper {
 
 model Citation {
   id              String   @id @default(cuid())
+  workspaceId     String
   sourcePaperId   String
   sourcePaper     Paper    @relation("SourcePaper", fields: [sourcePaperId], references: [id], onDelete: Cascade)
 
@@ -77,9 +81,12 @@ model Citation {
   targetPaperId   String?
   targetPaper     Paper?   @relation("CitationTarget", fields: [targetPaperId], references: [id])
 
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@index([workspaceId])
   @@index([sourcePaperId])
   @@index([doi])
   @@index([arxivId])
@@ -135,11 +142,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships     ProjectMember[]
+  memberships      ProjectMember[]
   workspaceMembers WorkspaceMember[]
   workspaceInvites WorkspaceInvite[]
-  comments        Comment[]
-  auditEvents     AuditEvent[]
+  comments         Comment[]
+  auditEvents      AuditEvent[]
 }
 
 model Project {
@@ -148,9 +155,11 @@ model Project {
   description     String?
   notes           String?  // Simple text notes for the project
   createdByUserId String?
+  workspaceId     String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   papers      ProjectPaper[]
   members     ProjectMember[]
   invites     ProjectInvite[]
@@ -158,6 +167,7 @@ model Project {
   todos       Todo[]
   auditEvents AuditEvent[]
   
+  @@index([workspaceId])
   @@index([name])
 }
 
@@ -190,23 +200,26 @@ model ProjectInvite {
 }
 
 model Doc {
-  id        String   @id @default(cuid())
-  projectId String
-  paperId   String?  // optional, for paper summary docs
-  title     String
-  content   String   // markdown/plaintext
-  createdBy String
-  updatedBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  workspaceId String
+  projectId   String
+  paperId     String?  // optional, for paper summary docs
+  title       String
+  content     String   // markdown/plaintext
+  createdBy   String
+  updatedBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  paper     Paper?  @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paper       Paper?    @relation(fields: [paperId], references: [id], onDelete: SetNull)
 
-  comments  Comment[]
-  events    AuditEvent[]
-  tags      DocTag[]
+  comments    Comment[]
+  events      AuditEvent[]
+  tags        DocTag[]
 
+  @@index([workspaceId])
   @@index([projectId])
   @@index([paperId])
 }
@@ -244,20 +257,23 @@ model AuditEvent {
 }
 
 model Todo {
-  id        String     @id @default(cuid())
-  projectId String
-  title     String
-  dueDate   DateTime
-  status    TodoStatus @default(OPEN)
-  notes     String?
+  id          String     @id @default(cuid())
+  workspaceId String
+  projectId   String
+  title       String
+  dueDate     DateTime
+  status      TodoStatus @default(OPEN)
+  notes       String?
 
-  createdBy String
-  updatedBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdBy   String
+  updatedBy   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([workspaceId])
   @@index([projectId])
   @@index([projectId, dueDate])
   @@index([projectId, status])
@@ -278,14 +294,18 @@ model ProjectPaper {
 }
 
 model Tag {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  paperTags PaperTag[]
-  docTags   DocTag[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  paperTags   PaperTag[]
+  docTags     DocTag[]
 
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
   @@index([name])
 }
 
@@ -321,8 +341,14 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members WorkspaceMember[]
-  invites WorkspaceInvite[]
+  members   WorkspaceMember[]
+  invites   WorkspaceInvite[]
+  papers    Paper[]
+  projects  Project[]
+  docs      Doc[]
+  todos     Todo[]
+  tags      Tag[]
+  citations Citation[]
 
   @@index([name])
 }

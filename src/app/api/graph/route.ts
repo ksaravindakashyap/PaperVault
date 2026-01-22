@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 
 // GET /api/graph?scope=project&projectId=...
 export async function GET(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get("scope");
     const projectId = searchParams.get("projectId");
@@ -27,6 +32,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
+    const workspaceId = await requireActiveWorkspaceId();
+
     // Get project
     const project = await db.project.findUnique({
       where: { id: projectId },
@@ -36,15 +43,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    // Verify project is in active workspace
+    if (project.workspaceId !== workspaceId) {
+      return NextResponse.json(
+        { error: "Project not in active workspace" },
+        { status: 403 }
+      );
+    }
+
     // Get papers in project
     const projectPapers = await db.projectPaper.findMany({
       where: { projectId },
       include: {
         paper: {
+          where: {
+            workspaceId: workspaceId,
+          },
           include: {
             tags: {
               include: {
-                tag: true,
+                tag: {
+                  where: {
+                    workspaceId: workspaceId,
+                  },
+                },
               },
             },
             citations: {

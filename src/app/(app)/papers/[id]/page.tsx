@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireActiveWorkspaceId } from "@/lib/auth";
 import { SummaryEditor } from "./summary-editor";
 import { ProcessingPanel } from "./processing-panel";
 import { BibTeXDisplay } from "./bibtex-display";
@@ -23,10 +23,22 @@ export default async function PaperDetailPage({ params, searchParams }: PageProp
   const fromPath = typeof search.from === 'string' ? search.from : '/library';
   const user = await getCurrentUser();
   
+  if (!user) {
+    notFound();
+  }
+
+  const workspaceId = await requireActiveWorkspaceId();
+  
   const paper = await db.paper.findUnique({
-    where: { id },
+    where: { 
+      id,
+      workspaceId: workspaceId,
+    },
     include: {
       citations: {
+        where: {
+          workspaceId: workspaceId,
+        },
         orderBy: [{ year: "desc" }, { title: "asc" }],
       },
       tags: {

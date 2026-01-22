@@ -265,9 +265,21 @@ async function extractAndStoreCitations(
     where: { sourcePaperId: paperId },
   });
 
+  // Get workspaceId from paper
+  const paperRecord = await db.paper.findUnique({
+    where: { id: paperId },
+    select: { workspaceId: true },
+  });
+
+  if (!paperRecord || !paperRecord.workspaceId) {
+    console.error(`Paper ${paperId} has no workspaceId, skipping citations`);
+    return;
+  }
+
   // Insert new citations
   await db.citation.createMany({
     data: resolved.map((c) => ({
+      workspaceId: paperRecord.workspaceId!,
       sourcePaperId: paperId,
       raw: c.raw,
       title: c.title,

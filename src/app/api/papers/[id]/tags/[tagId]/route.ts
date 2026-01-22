@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, setUserIdCookie } from "@/lib/auth";
 
 // DELETE /api/papers/[id]/tags/[tagId]
 export async function DELETE(
@@ -8,10 +8,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; tagId: string }> }
 ) {
   const { id: paperId, tagId } = await params;
-  const user = await getCurrentUser();
-
+  
+  // Get or create local user
+  let user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
   }
 
   try {

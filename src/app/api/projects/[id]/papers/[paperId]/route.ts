@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, setUserIdCookie } from "@/lib/auth";
 
 // DELETE /api/projects/[id]/papers/[paperId] - Remove paper from project
 export async function DELETE(
@@ -8,9 +8,19 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; paperId: string }> }
 ) {
   const { id, paperId } = await params;
-  const user = await getCurrentUser();
+  
+  // Get or create local user
+  let user = await getCurrentUser();
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        name: "Local User",
+      },
+    });
+    await setUserIdCookie(user.id);
+  }
 
-  const access = await requireProjectAccess(id, user?.id || null, "EDITOR");
+  const access = await requireProjectAccess(id, user.id, "EDITOR");
   if (!access.allowed) {
     return NextResponse.json({ error: access.error }, { status: 403 });
   }

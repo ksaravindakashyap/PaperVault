@@ -98,6 +98,31 @@ PaperVault stays minimal while remaining research-native:
 
 ---
 
+## Demo Mode
+
+Try PaperVault without installation via the live demo at `/demo/library`:
+
+**What you'll see:**
+- 8 sample papers from ML/Security conferences (NeurIPS, USENIX, etc.)
+- 3 demo projects with notes and todos
+- Full search functionality across papers, docs, and citations
+- Graph visualization of paper relationships
+- Read-only interface (no uploads, no modifications)
+
+**Demo features:**
+- ✅ Paper library browsing
+- ✅ Paper detail pages with metadata, abstract, BibTeX
+- ✅ Citations display
+- ✅ Project organization
+- ✅ Search across all content
+- ✅ Tag filtering
+- ❌ PDF uploads (read-only mode)
+- ❌ Editing or modifications
+
+**Technical note:** Demo mode uses static in-memory data (`src/demo/demo-data.ts`) and works without a database or backend. This makes it Netlify-deployable and perfect for trying PaperVault before installing locally.
+
+---
+
 ## Status
 
 PaperVault is actively evolving. The core paper library, projects, roles/sharing, docs/comments, and discovery workflows are in place. Citation extraction is present but format-sensitive and under ongoing refinement. If you wish to collaborate, please reach out to me

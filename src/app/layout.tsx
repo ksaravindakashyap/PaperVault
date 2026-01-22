@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Gowun_Batang } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { UserInitProvider } from "@/components/user-init-provider";
 
 const gowunBatang = Gowun_Batang({
   weight: ["400", "700"],
@@ -22,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={gowunBatang.className} suppressHydrationWarning>
-        {children}
+        <UserInitProvider>{children}</UserInitProvider>
         <Toaster />
       </body>
     </html>

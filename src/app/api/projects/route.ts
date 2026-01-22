@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 import { createProjectSchema } from "@/lib/validators";
 
 // GET /api/projects - List all projects with paper counts
 export async function GET() {
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
+
+    const workspaceId = await requireActiveWorkspaceId();
+
     const projects = await db.project.findMany({
+      where: {
+        workspaceId: workspaceId,
+      },
       orderBy: { updatedAt: "desc" },
       include: {
         _count: {
@@ -34,13 +50,21 @@ export async function GET() {
 // POST /api/projects - Create a new project
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    // Get or create local user
+    let user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
     }
 
     const body = await request.json();
     const validated = createProjectSchema.parse(body);
+
+    const workspaceId = await requireActiveWorkspaceId();
 
     // Create project and add creator as OWNER in a transaction
     const project = await db.project.create({
@@ -48,6 +72,7 @@ export async function POST(request: NextRequest) {
         name: validated.name,
         description: validated.description,
         createdByUserId: user.id,
+        workspaceId: workspaceId,
         members: {
           create: {
             userId: user.id,

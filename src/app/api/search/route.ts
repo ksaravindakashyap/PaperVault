@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, requireProjectAccess } from "@/lib/auth";
+import { getCurrentUser, requireProjectAccess, requireActiveWorkspaceId, setUserIdCookie } from "@/lib/auth";
 
 interface SearchResult {
   type: "paper" | "doc" | "todo" | "citation";
@@ -47,12 +47,17 @@ function calculateScore(text: string, query: string, isTitle: boolean = false): 
 
 // GET /api/search
 export async function GET(request: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    // Get or create local user
+    let user = await getCurrentUser();
+    if (!user) {
+      user = await db.user.create({
+        data: {
+          name: "Local User",
+        },
+      });
+      await setUserIdCookie(user.id);
+    }
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
     const scope = searchParams.get("scope") || "all";
@@ -86,13 +91,18 @@ export async function GET(request: NextRequest) {
     });
     const userProjectIds = userMemberships.map((m) => m.projectId);
 
+    // Get active workspace
+    const workspaceId = await requireActiveWorkspaceId();
+
     // Tokenize query for better matching
     const normalizedQuery = query.trim().toLowerCase();
     const tokens = normalizedQuery.split(/\s+/).filter((t) => t.length >= 2);
 
     // Search Papers
     if (types.includes("papers")) {
-      let paperWhere: any = {};
+      let paperWhere: any = {
+        workspaceId: workspaceId,
+      };
 
       if (scope === "project" && projectId) {
         paperWhere = {
@@ -229,7 +239,9 @@ export async function GET(request: NextRequest) {
 
     // Search Docs
     if (types.includes("docs")) {
-      let docWhere: any = {};
+      let docWhere: any = {
+        workspaceId: workspaceId,
+      };
 
       if (scope === "project" && projectId) {
         docWhere.projectId = projectId;
@@ -293,7 +305,9 @@ export async function GET(request: NextRequest) {
 
     // Search Todos
     if (types.includes("todos")) {
-      let todoWhere: any = {};
+      let todoWhere: any = {
+        workspaceId: workspaceId,
+      };
 
       if (scope === "project" && projectId) {
         todoWhere.projectId = projectId;
@@ -343,7 +357,9 @@ export async function GET(request: NextRequest) {
 
     // Search Citations
     if (types.includes("citations")) {
-      let citationWhere: any = {};
+      let citationWhere: any = {
+        workspaceId: workspaceId,
+      };
 
       if (scope === "project" && projectId) {
         citationWhere.sourcePaper = {
