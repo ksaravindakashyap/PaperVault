@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
@@ -34,3 +35,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma
+prisma/*.db
+prisma/*.db-journal
+
+# uploads
+/data/uploads
+
+# test PDFs
+/test-pdfs/*.pdf

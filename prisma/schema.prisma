@@ -1,0 +1,268 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Paper {
+  id               String      @id @default(cuid())
+  fileKey          String      // relative path: data/uploads/<id>.pdf
+  originalFileName String
+  venueType        VenueType
+  status           PaperStatus @default(PROCESSING)
+
+  title     String?
+  authors   String? // raw string for now
+  year      Int?
+  doi       String?
+  arxivId   String?
+  abstract  String?
+  summary   String? // plain text summary space (Step 1)
+  bibtex    String? // generated BibTeX
+  
+  // Processing fields
+  processingLockedAt  DateTime?
+  processingLockedBy  String?
+  processingAttempts  Int      @default(0)
+  lastProcessingError String?
+  processedAt         DateTime?
+  
+  // Venue mismatch detection
+  detectedVenueType   VenueType?
+  venueMismatchNote   String?
+  
+  // Citation extraction
+  citationsExtractedAt DateTime?
+  citationsStatus      String?  // "NOT_STARTED" | "DONE" | "FAILED"
+  citationsError       String?
+  citationsCount       Int?
+  citationsScannedPages String? // e.g., "1,2,3,4,5" for debug/display
+  
+  // Relations
+  citations         Citation[] @relation("SourcePaper")
+  citedBy           Citation[] @relation("CitationTarget")
+  projects          ProjectPaper[]
+  docs              Doc[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, processingLockedAt])
+  @@index([createdAt])
+  @@index([doi])
+  @@index([arxivId])
+}
+
+model Citation {
+  id              String   @id @default(cuid())
+  sourcePaperId   String
+  sourcePaper     Paper    @relation("SourcePaper", fields: [sourcePaperId], references: [id], onDelete: Cascade)
+
+  raw             String
+  title           String?
+  authors         String?
+  year            Int?
+  venue           String?
+  doi             String?
+  arxivId         String?
+  url             String?
+
+  targetPaperId   String?
+  targetPaper     Paper?   @relation("CitationTarget", fields: [targetPaperId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sourcePaperId])
+  @@index([doi])
+  @@index([arxivId])
+  @@index([title])
+  @@index([targetPaperId])
+}
+
+enum VenueType {
+  ACL
+  NEURIPS
+  ICML
+  ICLR
+  EMNLP
+  NAACL
+  USENIX_SECURITY
+  CCS
+  NDSS
+  CHI
+  IEEE_GENERIC
+  OTHER
+}
+
+enum PaperStatus {
+  PROCESSING
+  READY
+  FAILED
+  TO_READ
+  SKIMMED
+  DEEP_READ
+  INTEGRATED
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  COMMENTER
+}
+
+enum TodoStatus {
+  OPEN
+  DONE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships ProjectMember[]
+  comments    Comment[]
+  auditEvents AuditEvent[]
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  notes           String?  // Simple text notes for the project
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  papers      ProjectPaper[]
+  members     ProjectMember[]
+  invites     ProjectInvite[]
+  docs        Doc[]
+  todos       Todo[]
+  auditEvents AuditEvent[]
+  
+  @@index([name])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(COMMENTER)
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectInvite {
+  id        String   @id @default(cuid())
+  projectId String
+  token     String   @unique
+  role      ProjectRole @default(COMMENTER)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Doc {
+  id        String   @id @default(cuid())
+  projectId String
+  paperId   String?  // optional, for paper summary docs
+  title     String
+  content   String   // markdown/plaintext
+  createdBy String
+  updatedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paper     Paper?  @relation(fields: [paperId], references: [id], onDelete: SetNull)
+
+  comments  Comment[]
+  events    AuditEvent[]
+
+  @@index([projectId])
+  @@index([paperId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  docId       String
+  authorId    String
+  body        String
+  anchorStart Int?
+  anchorEnd   Int?
+  createdAt   DateTime @default(now())
+
+  doc       Doc  @relation(fields: [docId], references: [id], onDelete: Cascade)
+  author    User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([docId])
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  projectId String
+  docId     String?
+  actorId   String
+  action    String   // "DOC_UPDATED", "COMMENT_ADDED", "MEMBER_ADDED", etc.
+  metadata  String?  // JSON string
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User    @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  doc     Doc?    @relation(fields: [docId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([docId])
+}
+
+model Todo {
+  id        String     @id @default(cuid())
+  projectId String
+  title     String
+  dueDate   DateTime
+  status    TodoStatus @default(OPEN)
+  notes     String?
+
+  createdBy String
+  updatedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([projectId, dueDate])
+  @@index([projectId, status])
+}
+
+model ProjectPaper {
+  id        String   @id @default(cuid())
+  projectId String
+  paperId   String
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paper     Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, paperId])
+  @@index([projectId])
+  @@index([paperId])
+}
