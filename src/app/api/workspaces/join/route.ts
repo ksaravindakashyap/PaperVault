@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, setActiveWorkspaceCookie } from "@/lib/auth";
+import { getCurrentUser, setActiveWorkspaceCookie, setUserIdCookie } from "@/lib/auth";
 import { joinWorkspaceSchema } from "@/lib/validators";
 
 // POST /api/workspaces/join

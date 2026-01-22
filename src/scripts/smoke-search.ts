@@ -10,7 +10,6 @@ async function smokeSearch() {
       where: {
         title: {
           contains: "WASP",
-          mode: "insensitive",
         },
       },
     });
@@ -23,6 +22,7 @@ async function smokeSearch() {
           originalFileName: "wasp-test.pdf",
           venueType: "OTHER",
           status: "READY",
+          workspaceId: "test-workspace", // Required field
           title: testTitle,
           authors: "Test Author",
           year: 2024,
@@ -42,7 +42,6 @@ async function smokeSearch() {
         where: {
           title: {
             contains: query,
-            mode: "insensitive",
           },
         },
       });
@@ -63,7 +62,7 @@ async function smokeSearch() {
     const tokenResults = await db.paper.findMany({
       where: {
         OR: tokens.flatMap((token) => [
-          { title: { contains: token, mode: "insensitive" } },
+          { title: { contains: token } },
         ]),
       },
     });

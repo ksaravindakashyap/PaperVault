@@ -21,7 +21,7 @@ export default function DemoDocDetailPage() {
         setDoc(docData);
         setTags(getDocTags(id));
         const projectData = getProject(docData.projectId);
-        setProject(projectData);
+        setProject(projectData || null);
       }
     }
   }, [id, getDoc, getDocTags, getProject]);

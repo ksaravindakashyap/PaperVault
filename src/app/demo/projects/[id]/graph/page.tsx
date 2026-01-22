@@ -308,19 +308,19 @@ export default function DemoProjectGraphPage() {
                   {selectedNode.meta.venueType && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Venue</p>
-                      <p className="text-gray-900">{selectedNode.meta.venueType.replace(/_/g, " ")}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.venueType).replace(/_/g, " ")}</p>
                     </div>
                   )}
                   {selectedNode.meta.year && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Year</p>
-                      <p className="text-gray-900">{selectedNode.meta.year}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.year)}</p>
                     </div>
                   )}
                   {selectedNode.meta.status && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Status</p>
-                      <p className="text-gray-900">{selectedNode.meta.status.replace(/_/g, " ")}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.status).replace(/_/g, " ")}</p>
                     </div>
                   )}
                   <Button asChild className="w-full">
@@ -333,12 +333,12 @@ export default function DemoProjectGraphPage() {
                   {selectedNode.meta.description && (
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Description</p>
-                      <p className="text-gray-900">{selectedNode.meta.description}</p>
+                      <p className="text-gray-900">{String(selectedNode.meta.description)}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Papers</p>
-                    <p className="text-gray-900">{selectedNode.meta.paperCount || 0}</p>
+                    <p className="text-gray-900">{String(selectedNode.meta.paperCount || 0)}</p>
                   </div>
                   <Button asChild className="w-full">
                     <Link href={`/demo/projects/${selectedNode.id}`}>Open Project</Link>
