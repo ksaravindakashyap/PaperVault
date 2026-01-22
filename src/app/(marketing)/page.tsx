@@ -42,7 +42,7 @@ export default function LandingPage() {
   const [copied, setCopied] = useState(false);
 
   const handleCopyEmail = () => {
-    navigator.clipboard.writeText("aravinda.kashyap@example.com");
+    navigator.clipboard.writeText("ksaravindakashyap@gmail.com");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -448,7 +448,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-orange-500" />
                   <span className="text-gray-700">
-                    aravinda.kashyap@example.com
+                    ksaravindakashyap@gmail.com
                   </span>
                   <button
                     onClick={handleCopyEmail}

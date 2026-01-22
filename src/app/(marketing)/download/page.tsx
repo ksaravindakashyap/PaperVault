@@ -136,7 +136,7 @@ export default function DownloadPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="mailto:aravinda.kashyap@example.com?subject=PaperVault Desktop Waitlist"
+                href="mailto:ksaravindakashyap@gmail.com?subject=PaperVault Desktop Waitlist"
                 className="inline-block"
               >
                 <Button
