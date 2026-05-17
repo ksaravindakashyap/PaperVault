@@ -1,9 +1,15 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_NIM_API_KEY,
-  baseURL: process.env.NVIDIA_NIM_BASE_URL,
-});
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) {
+    _client = new OpenAI({
+      apiKey: process.env.NVIDIA_NIM_API_KEY,
+      baseURL: process.env.NVIDIA_NIM_BASE_URL,
+    });
+  }
+  return _client;
+}
 
 const MODEL = process.env.EMBEDDING_MODEL || "nvidia/nv-embedqa-e5-v5";
 
@@ -14,7 +20,7 @@ export async function generateEmbedding(
 ): Promise<number[]> {
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await (client.embeddings.create as any)({
+  const response = await (getClient().embeddings.create as any)({
     model: MODEL,
     input: cleaned,
     encoding_format: "float",

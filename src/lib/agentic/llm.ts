@@ -1,9 +1,15 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_NIM_API_KEY,
-  baseURL: process.env.NVIDIA_NIM_BASE_URL,
-});
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) {
+    _client = new OpenAI({
+      apiKey: process.env.NVIDIA_NIM_API_KEY,
+      baseURL: process.env.NVIDIA_NIM_BASE_URL,
+    });
+  }
+  return _client;
+}
 
 const MODEL = process.env.LLM_MODEL || "stepfun-ai/step-3.5-flash";
 
@@ -50,7 +56,7 @@ Important rules:
   let rawContent: string | null = null;
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
@@ -162,7 +168,7 @@ Identify 3 research gaps the researcher is missing. Output ONLY this JSON, no ot
   let rawContent: string | null = null;
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         { role: "system", content: "You output ONLY valid JSON. No explanation, no reasoning text, no markdown. Just the JSON object." },
@@ -240,7 +246,7 @@ Return ONLY the synthesis, no preamble, no headers, no bullet points.`;
   let rawContent: string | null = null;
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         { role: "system", content: "You write concise, precise academic literature synthesis. Output only the synthesis paragraph." },
