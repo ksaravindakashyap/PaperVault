@@ -399,7 +399,7 @@ export function AgenticSearchDialog({ showTrigger = true }: Props) {
                                   {paper.venue ? ` · ${paper.venue}` : ""}
                                 </p>
                                 {paper.tldr ? (
-                                  <p className="text-xs text-gray-600 mt-1 italic line-clamp-2">"{paper.tldr}"</p>
+                                  <p className="text-xs text-gray-600 mt-1 italic line-clamp-2">&quot;{paper.tldr}&quot;</p>
                                 ) : paper.abstract ? (
                                   <p className="text-xs text-gray-600 mt-1 line-clamp-2">{paper.abstract}</p>
                                 ) : null}
