@@ -1,128 +1,78 @@
 # PaperVault
 
-PaperVault is a paper-centric workspace designed for research workflows. Instead of treating research as generic documents and folders, it models the objects researchers actually use every day: papers (PDFs), metadata, BibTeX, references, reading status, project libraries, lab notes, and shared docs.
-
-It’s built to reduce the friction between “I found a paper” and “this paper is now organized, summarized, and connected to a project I’m working on.”
-
----
-
-## What it is
-
-PaperVault is a lightweight research hub that helps individuals and labs:
-- keep a structured paper library (PDF-first),
-- extract and standardize metadata and citations,
-- organize papers into projects,
-- track reading progress,
-- collaborate through shared docs, comments, and audit trails.
-
-The focus is pragmatic: clear UX, research-native primitives, and deterministic processing.
-
----
-
-## Who it’s for
-
-PaperVault is useful for:
-
-- **Graduate students & researchers** building literature reviews and maintaining reading pipelines
-- **Lab groups** that share papers, meeting notes, and project context
-- **Systems / ML / Security teams** that want traceable research organization without heavy tooling
-- **Anyone writing papers** who wants BibTeX, references, and project structure in one place
-
-If your current workflow is “PDFs in folders + scattered Google Docs + a messy BibTeX file,” PaperVault is designed to consolidate that into a single research-native workspace.
+PaperVault is an AI-powered research workspace for academics. It combines a structured paper library with semantic search, reading workflow tools, and LLM-powered analysis to reduce friction from "I found a paper" to "this is in my lit review."
 
 ---
 
 ## What it does
 
-### 1) Paper-centric library (PDF-first)
-- Upload PDFs and keep them in a structured library
-- Extract key metadata (title, authors, year, abstract, DOI/arXiv when available)
-- Generate BibTeX entries with copy support
-- Maintain per-paper summaries/notes
+### Paper library
+- Upload PDFs and extract metadata (title, authors, year, abstract, DOI, arXiv ID)
+- Generate BibTeX entries with one-click copy
+- Extract references per paper and link them to other papers in your library
+- Full-text search across papers, docs, todos, and citations
 
-**Why it helps:** reduces manual copy-paste and keeps paper context consistent across a project.
+### AI Search
+- Search 100M+ papers from Semantic Scholar with a natural language query
+- Query type detection: short exact-match queries skip the LLM and do a direct title lookup; exploratory queries decompose through an LLM
+- Cache-first: if enough relevant papers exist in the local vector cache, the Semantic Scholar API is skipped entirely
+- Year range filters and venue filters
+- Add any search result directly to your library with one click
 
-### 2) References / citations (iterative)
-- Extract “References” from the PDF and display them on the paper page
-- Attempt to link a cited reference to an internal paper when possible (DOI/arXiv/title heuristics)
+### Reading Queue (kanban board)
+- Track papers through five stages: Inbox, To Read, Skimmed, Deep Read, Integrated
+- Drag-free progression with prev/next column buttons
+- Optimistic UI updates
 
-**Why it helps:** makes it easier to follow related work and build a connected local library.
-> Citation extraction is deterministic and format-sensitive; quality varies across PDFs and is being improved.
+### What to Read Next
+- pgvector cosine similarity between your Deep Read + Integrated papers and your To Read pile
+- Recommends the most topically relevant papers to tackle next
+- Appears automatically in the Reading Queue board view
 
-### 3) Projects: research workspaces
-- Create projects and attach papers (a paper can belong to multiple projects)
-- Project dashboard views:
-  - paper list by project
-  - reading queue stages: **TO_READ → SKIMMED → DEEP_READ → INTEGRATED**
-  - project notes
+### Cross-paper Synthesis
+- Select 2 to 5 papers from your library
+- LLM generates a 180 to 250 word synthesis paragraph covering shared findings, contradictions, and methodological differences
+- Ready to paste into a literature review
 
-**Why it helps:** keeps literature aligned with the research thread it supports, not just a global dump.
+### Research Gap Finder
+- Describe your research direction in plain text
+- System embeds the query, retrieves your most relevant library papers, and fetches recent external papers not in your library
+- LLM identifies 3 to 4 named research gaps with descriptions and specific paper suggestions
+- Add suggested papers to your library directly from the dialog
 
-### 4) Lab-style sharing and collaboration
-- Lightweight, local auth (name-based) with project membership
-- Invite links to share a project
-- Roles: **OWNER**, **EDITOR**, **COMMENTER**
-- Shared docs inside projects (optionally linked to papers)
-- Comments on docs
-- Audit trail for key actions (member changes, doc updates, comments)
+### Projects and collaboration
+- Group papers into research projects
+- Per-project docs, notes, todos, and shared commenting
+- Role-based access: Owner, Editor, Commenter
+- Audit trail for key actions
 
-**Why it helps:** supports “Google-doc-like lab coordination” while keeping research structure intact and traceable.
-
-### 5) Weekly todos (project planning)
-- Simple todos per project with a due date picker (calendar)
-- “This week” view to keep tasks focused
-- Role-based editing
-
-**Why it helps:** small, practical planning layer tied to project context—no separate tool required.
-
-### 6) Discovery (search + tags + graph)
-- Global search across papers, docs, todos, and citations
-- Tags/concepts on papers and docs (autocomplete + filtering)
-- Graph view inside a project: **Project ↔ Papers ↔ Tags** (optionally internal citation edges)
-
-**Why it helps:** makes it fast to answer “where did we discuss this?” and “what papers relate to this concept?”
+### Citation graph
+- Visual graph of paper relationships within a project
+- Paper to tag connections and internal citation edges
 
 ---
 
-## Why not just use Notion / Drive / Zotero?
+## Stack
 
-PaperVault is optimized for a specific gap:
-- Zotero-like libraries are great for reference management but don’t naturally map to project workspaces, reading pipelines, and lab collaboration.
-- Notion/Drive are flexible, but research workflows become inconsistent quickly (metadata formats drift, citations aren’t integrated, and paper context gets lost).
-
-PaperVault stays minimal while remaining research-native:
-- structured paper objects,
-- deterministic extraction,
-- project-oriented organization,
-- collaboration features aligned to lab workflows.
+- **Frontend:** Next.js 15 (App Router), Tailwind CSS, shadcn/ui, Framer Motion
+- **Database:** PostgreSQL on Neon with pgvector (1024-dim embeddings)
+- **LLM:** stepfun-ai/step-3.5-flash via Nvidia NIM (query decomposition, synthesis, gap analysis)
+- **Embeddings:** nvidia/nv-embedqa-e5-v5 (asymmetric: passage/query input types)
+- **Paper data:** Semantic Scholar API
 
 ---
 
-## Demo Mode
+## Who it is for
 
-Try PaperVault without installation via the live demo at `/demo/library`:
-
-**What you'll see:**
-- 8 sample papers from ML/Security conferences (NeurIPS, USENIX, etc.)
-- 3 demo projects with notes and todos
-- Full search functionality across papers, docs, and citations
-- Graph visualization of paper relationships
-- Read-only interface (no uploads, no modifications)
-
-**Demo features:**
-- ✅ Paper library browsing
-- ✅ Paper detail pages with metadata, abstract, BibTeX
-- ✅ Citations display
-- ✅ Project organization
-- ✅ Search across all content
-- ✅ Tag filtering
-- ❌ PDF uploads (read-only mode)
-- ❌ Editing or modifications
-
-**Technical note:** Demo mode uses static in-memory data (`src/demo/demo-data.ts`) and works without a database or backend. This makes it Netlify-deployable and perfect for trying PaperVault before installing locally.
+- Graduate students building literature reviews
+- Lab groups sharing papers and project context
+- ML / NLP / Security researchers who want structured organization without heavy tooling
+- Anyone whose current workflow is PDFs in folders, scattered Google Docs, and a messy BibTeX file
 
 ---
 
 ## Status
 
-PaperVault is actively evolving. The core paper library, projects, roles/sharing, docs/comments, and discovery workflows are in place. Citation extraction is present but format-sensitive and under ongoing refinement. If you wish to collaborate, please reach out to me
+Actively developed. Core library, AI search, reading queue, recommendations, synthesis, and gap finder are all functional. Citation extraction quality varies across PDF formats and is being refined.
+
+To collaborate or give feedback, reach out on LinkedIn: linkedin.com/in/ksaravindakashyap

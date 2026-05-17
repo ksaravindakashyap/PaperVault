@@ -1,109 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { updatePaperStatusSchema } from "@/lib/validators";
-import fs from "fs/promises";
-import path from "path";
+import { requireActiveWorkspaceId } from "@/lib/auth";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+const READING_STATUSES = ["READY", "TO_READ", "SKIMMED", "DEEP_READ", "INTEGRATED"];
 
-/**
- * PATCH /api/papers/[id]
- * Update paper status
- */
 export async function PATCH(
   request: NextRequest,
-  context: RouteContext
-): Promise<NextResponse> {
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = await context.params;
+    const workspaceId = await requireActiveWorkspaceId();
+    const { id } = await params;
+    const { status } = await request.json();
 
-    if (!id) {
-      return NextResponse.json({ error: "Paper ID is required" }, { status: 400 });
+    if (!READING_STATUSES.includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const validated = updatePaperStatusSchema.parse(body);
-
-    const paper = await db.paper.update({
-      where: { id },
-      data: { status: validated.status },
+    const paper = await db.paper.findFirst({
+      where: { id, workspaceId },
+      select: { id: true },
     });
 
-    return NextResponse.json(paper);
+    if (!paper) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const updated = await db.paper.update({
+      where: { id },
+      data: { status },
+      select: { id: true, status: true },
+    });
+
+    return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid input", details: error }, { status: 400 });
-    }
-    if (error instanceof Error && error.message.includes("Record to update not found")) {
-      return NextResponse.json({ error: "Paper not found" }, { status: 404 });
-    }
-    console.error("Error updating paper:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update paper" },
-      { status: 500 }
-    );
+    console.error("Status update failed:", error);
+    return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
   }
 }
 
-/**
- * DELETE /api/papers/[id]
- * Delete a paper, its citations, and its PDF file
- */
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-): Promise<NextResponse> {
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = await context.params;
+    const workspaceId = await requireActiveWorkspaceId();
+    const { id } = await params;
 
-    if (!id) {
-      return NextResponse.json({ error: "Paper ID is required" }, { status: 400 });
-    }
-
-    // Find paper
-    const paper = await db.paper.findUnique({
-      where: { id },
-      select: { id: true, fileKey: true },
+    const paper = await db.paper.findFirst({
+      where: { id, workspaceId },
+      select: { id: true },
     });
 
-    if (!paper) {
-      return NextResponse.json({ error: "Paper not found" }, { status: 404 });
-    }
+    if (!paper) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // Delete PDF file from disk
-    if (paper.fileKey) {
-      const filePath = path.join(process.cwd(), paper.fileKey);
-      try {
-        await fs.unlink(filePath);
-        console.log(`Deleted file: ${filePath}`);
-      } catch (fileError) {
-        // Ignore file-not-found errors
-        if ((fileError as NodeJS.ErrnoException).code !== "ENOENT") {
-          console.error(`Error deleting file ${filePath}:`, fileError);
-        }
-      }
-    }
-
-    // Delete citations first (if not cascade)
-    await db.citation.deleteMany({
-      where: { sourcePaperId: id },
-    });
-
-    // Delete paper record
-    await db.paper.delete({
-      where: { id },
-    });
-
-    console.log(`Paper ${id} deleted successfully`);
-
-    return NextResponse.json({ ok: true });
+    await db.paper.delete({ where: { id } });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting paper:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete paper" },
-      { status: 500 }
-    );
+    console.error("Delete failed:", error);
+    return NextResponse.json({ error: "Failed to delete paper" }, { status: 500 });
   }
 }

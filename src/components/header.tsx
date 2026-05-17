@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, KeyboardEvent, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -11,19 +11,9 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
-
-  // Sync search query from URL when on search page
-  useEffect(() => {
-    if (pathname === "/search" || pathname === "/demo/search") {
-      const urlQuery = searchParams.get("q") || "";
-      setSearchQuery(urlQuery);
-    }
-  }, [pathname, searchParams]);
 
   // Load current workspace name
   const loadWorkspaceName = () => {
@@ -66,21 +56,10 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
     if (e.key === "Enter") {
       e.preventDefault();
       const trimmed = searchQuery.trim();
-      const isDemo = pathname.startsWith("/demo");
-      const searchPath = isDemo ? "/demo/search" : "/search";
-      
-      if (trimmed) {
-        if (pathname === searchPath || pathname === "/search" || pathname === "/demo/search") {
-          // Already on search page, update query
-          router.replace(`${searchPath}?q=${encodeURIComponent(trimmed)}`);
-        } else {
-          // Navigate to search page
-          router.push(`${searchPath}?q=${encodeURIComponent(trimmed)}`);
-        }
-      } else {
-        // Empty query, just go to search page
-        router.push(searchPath);
-      }
+      window.dispatchEvent(
+        new CustomEvent("openAISearch", { detail: { query: trimmed } })
+      );
+      setSearchQuery("");
     }
   };
 
@@ -120,7 +99,7 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
         )}
         {workspaceName && (
           <h2 className="text-lg font-semibold text-gray-800">
-            {workspaceName} Workspace
+            {workspaceName}
           </h2>
         )}
       </div>
@@ -131,7 +110,7 @@ export function Header({ onToggleSidebar, sidebarCollapsed = false }: HeaderProp
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
-            placeholder="Search..."
+            placeholder="Search papers, ask anything… (Enter)"
             className="pl-9 pr-4"
           />
         </div>

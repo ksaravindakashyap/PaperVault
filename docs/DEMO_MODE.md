@@ -2,6 +2,14 @@
 
 PaperVault supports a public demo mode that works without a database or filesystem, making it suitable for static hosting (e.g., Netlify).
 
+## Marketing links vs `/demo/*`
+
+By default, **“View Demo” / “Try Demo”** on the marketing site point to **`/library`** (full app). For static deploys without a backend, set:
+
+`NEXT_PUBLIC_MARKETING_DEMO_HREF=/demo/library`
+
+See `src/lib/marketing-demo-href.ts` and `.env.example`.
+
 ## How It Works
 
 Demo mode is enabled when users navigate to routes under `/demo/*`. These routes use a static dataset (`src/demo/demo-data.ts`) instead of Prisma queries.

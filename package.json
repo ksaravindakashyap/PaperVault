@@ -13,7 +13,9 @@
     "smoke:pdfjs": "tsx src/scripts/smoke-pdfjs.ts",
     "smoke:search": "tsx src/scripts/smoke-search.ts",
     "smoke:demo": "tsx src/scripts/smoke-demo-routes.ts",
-    "validate:demo-netlify": "tsx src/scripts/validate-demo-netlify.ts"
+    "smoke:agentic": "tsx src/scripts/smoke-agentic-search.ts",
+    "validate:demo-netlify": "tsx src/scripts/validate-demo-netlify.ts",
+    "embed:papers": "tsx src/scripts/embed-papers.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
@@ -33,6 +35,7 @@
     "framer-motion": "^12.28.1",
     "lucide-react": "^0.562.0",
     "next": "^15.1.3",
+    "openai": "^6.35.0",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.4.530",
     "react": "^19.0.0",

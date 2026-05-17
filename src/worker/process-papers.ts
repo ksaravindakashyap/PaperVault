@@ -3,6 +3,7 @@ import { extractMetadata } from "../lib/extraction/extract";
 import { generateBibTeX } from "../lib/citations/bibtex";
 import { extractCitationsFromPDF } from "../lib/extraction/citations";
 import { resolveCitationTargets } from "../lib/extraction/citationResolver";
+import { embedPaper } from "../lib/embeddings";
 import os from "os";
 
 const WORKER_ID = `${os.hostname()}-${Math.random().toString(36).substring(7)}`;
@@ -126,6 +127,32 @@ async function processPaper(paperId: string) {
     console.log(
       `[${new Date().toISOString()}] ✓ Paper ${paperId} processed successfully in ${duration}ms\n`
     );
+
+    // Generate semantic embedding
+    try {
+      const updatedPaper = await db.paper.findUnique({
+        where: { id: paperId },
+        select: { title: true, abstract: true, authors: true, year: true },
+      });
+      if (updatedPaper) {
+        const vec = await embedPaper(updatedPaper);
+        const vecLiteral = `[${vec.join(",")}]`;
+        await db.$executeRaw`
+          UPDATE "Paper"
+          SET embedding = ${vecLiteral}::vector,
+              "embeddingStatus" = 'DONE',
+              "embeddedAt" = NOW()
+          WHERE id = ${paperId}
+        `;
+        console.log(`  ✓ Embedding generated (${vec.length} dims)`);
+      }
+    } catch (embErr) {
+      console.error(`Embedding failed for ${paperId}:`, embErr);
+      await db.paper.update({
+        where: { id: paperId },
+        data: { embeddingStatus: "FAILED" },
+      });
+    }
 
     // Extract citations (non-blocking)
     try {

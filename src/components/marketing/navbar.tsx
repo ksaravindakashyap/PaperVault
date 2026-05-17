@@ -5,6 +5,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MARKETING_DEMO_HREF } from "@/lib/marketing-demo-href";
 
 export function MarketingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -71,7 +72,7 @@ export function MarketingNavbar() {
             >
               Contact
             </button>
-            <Link href="/demo/library">
+            <Link href={MARKETING_DEMO_HREF}>
               <Button className="bg-orange-500 hover:bg-orange-600 text-white">
                 View Demo
               </Button>
@@ -118,7 +119,7 @@ export function MarketingNavbar() {
               Contact
             </button>
             <div className="px-4 pt-2">
-              <Link href="/demo/library" onClick={() => setMobileMenuOpen(false)}>
+              <Link href={MARKETING_DEMO_HREF} onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
                   View Demo
                 </Button>

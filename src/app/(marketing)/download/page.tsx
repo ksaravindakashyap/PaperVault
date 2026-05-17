@@ -4,12 +4,14 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  Download,
   ArrowRight,
   FileText,
   Database,
   Lock,
   Zap,
+  Search,
+  Network,
+  CheckCircle2,
 } from "lucide-react";
 
 const fadeInUp = {
@@ -18,7 +20,7 @@ const fadeInUp = {
   transition: { duration: 0.5 },
 };
 
-export default function DownloadPage() {
+export default function GetStartedPage() {
   return (
     <div className="overflow-x-hidden">
       {/* Hero Section */}
@@ -30,22 +32,31 @@ export default function DownloadPage() {
             variants={fadeInUp}
           >
             <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 text-white rounded-full mb-6">
-              <Download className="w-8 h-8" />
+              <CheckCircle2 className="w-8 h-8" />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              PaperVault Desktop
+              Get Started with PaperVault
             </h1>
             <p className="text-xl text-gray-600 mb-4">
-              Coming soon
+              Full-featured web application - no download required
             </p>
             <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-              Download the full desktop application for local-first paper management with complete control over your research data.
+              Start organizing your research papers, extracting metadata, and collaborating with your team right now in your browser.
             </p>
+            <Link href="/library">
+              <Button
+                size="lg"
+                className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8"
+              >
+                Launch PaperVault
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* What You Can Do Right Now */}
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -55,10 +66,10 @@ export default function DownloadPage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              What desktop enables
+              What you can do right now
             </h2>
             <p className="text-xl text-gray-600">
-              Full-featured research workspace on your machine
+              All features available immediately in your browser
             </p>
           </motion.div>
 
@@ -66,39 +77,39 @@ export default function DownloadPage() {
             {[
               {
                 icon: FileText,
-                title: "Local PDFs + Full Ingestion",
+                title: "Upload & Process PDFs",
                 description:
-                  "Upload and process PDFs directly on your machine with the complete extraction pipeline.",
+                  "Upload research papers and automatically extract metadata, title, authors, abstract, and BibTeX citations.",
               },
               {
                 icon: Zap,
-                title: "Deterministic Extraction",
+                title: "Metadata Extraction",
                 description:
-                  "Consistent metadata extraction, BibTeX generation, and citation parsing with full control.",
+                  "Conference-aware parsing for NEURIPS, ACL, USENIX, and more. Get clean, structured data from your papers.",
               },
               {
                 icon: Database,
                 title: "Projects & Collaboration",
                 description:
-                  "Organize papers into projects, create docs, manage todos, and collaborate with your team.",
+                  "Organize papers into projects, invite team members, manage permissions, and collaborate with shared docs.",
               },
               {
-                icon: FileText,
-                title: "Search & Graph",
+                icon: Search,
+                title: "AI Search and Gap Finder",
                 description:
-                  "Global search across all your papers, docs, and todos. Visualize relationships with graph view.",
+                  "Search 100M+ papers with natural language. Discover what your library is missing with the Research Gap Finder.",
+              },
+              {
+                icon: Network,
+                title: "Citation Graph",
+                description:
+                  "Visualize paper relationships, track citations, and explore your research network with interactive graphs.",
               },
               {
                 icon: Lock,
-                title: "Private & Offline-First",
+                title: "Secure Workspaces",
                 description:
-                  "All your data stays on your machine. Work offline, sync when you choose.",
-              },
-              {
-                icon: ArrowRight,
-                title: "Complete Feature Set",
-                description:
-                  "Tags, citations, notes, summaries, and everything you need for research management.",
+                  "Role-based access control, workspace management, and audit trails for team governance.",
               },
             ].map((feature, index) => (
               <motion.div
@@ -120,6 +131,67 @@ export default function DownloadPage() {
         </div>
       </section>
 
+      {/* Quick Start Guide */}
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Three steps to get started
+            </h2>
+            <p className="text-xl text-gray-600">
+              Begin organizing your research in minutes
+            </p>
+          </motion.div>
+
+          <div className="space-y-8">
+            {[
+              {
+                step: "1",
+                title: "Create your workspace",
+                description:
+                  "Click 'Launch PaperVault' and you'll automatically be set up with a workspace. No registration required to start.",
+              },
+              {
+                step: "2",
+                title: "Upload your first paper",
+                description:
+                  "Upload a PDF, select the conference venue type, and let PaperVault extract all the metadata automatically.",
+              },
+              {
+                step: "3",
+                title: "Start organizing",
+                description:
+                  "Create projects, add papers to reading queues, take notes, and use AI search to discover related work.",
+              },
+            ].map((step, index) => (
+              <motion.div
+                key={step.step}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 }}
+                className="flex items-start gap-6 bg-white p-6 rounded-xl border border-gray-200"
+              >
+                <div className="flex-shrink-0 inline-flex items-center justify-center w-12 h-12 bg-orange-500 text-white text-xl font-bold rounded-full">
+                  {step.step}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-orange-500">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -132,31 +204,17 @@ export default function DownloadPage() {
               Ready to get started?
             </h2>
             <p className="text-xl text-orange-100 mb-8">
-              Join the waitlist to be notified when PaperVault Desktop is available
+              Launch PaperVault now and start organizing your research
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="mailto:ksaravindakashyap@gmail.com?subject=PaperVault Desktop Waitlist"
-                className="inline-block"
+            <Link href="/library">
+              <Button
+                size="lg"
+                className="bg-white text-orange-500 hover:bg-gray-100 text-lg px-8"
               >
-                <Button
-                  size="lg"
-                  className="bg-white text-orange-500 hover:bg-gray-100 text-lg px-8"
-                >
-                  Join Waitlist
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </a>
-              <Link href="/demo/library">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="bg-transparent border-white text-white hover:bg-white/10 text-lg px-8"
-                >
-                  Try Demo
-                </Button>
-              </Link>
-            </div>
+                Launch PaperVault
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>

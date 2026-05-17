@@ -17,7 +17,7 @@ const getNavItems = (isDemo: boolean) => {
   return [
     { name: "Library", href: `${prefix}/library` },
     { name: "Projects", href: `${prefix}/projects` },
-    { name: "Graph", href: `${prefix}/graphs` },
+    { name: "Citation Graph", href: `${prefix}/graphs` },
     { name: "Manuscripts", href: `${prefix}/manuscripts`, disabled: true },
   ];
 };
@@ -77,7 +77,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
           {navItems.map((item) => {
             // Special handling for Graph: active on /graphs or /projects/*/graph
             let isActive = pathname.startsWith(item.href);
-            if (item.name === "Graph") {
+            if (item.name === "Citation Graph") {
               const graphPath = isDemo ? "/demo/graphs" : "/graphs";
               isActive =
                 pathname === graphPath ||
@@ -110,7 +110,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
               onClick={() => setIsWorkspaceDialogOpen(true)}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white"
             >
-              Change Workspace
+              Switch Lab
             </Button>
           </div>
         )}

@@ -15,12 +15,12 @@ export function DemoBanner() {
   return (
     <div className="bg-orange-500 text-white px-4 py-3 border-b border-orange-600 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-medium">Demo mode</span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="font-medium">Static preview</span>
           <span className="text-orange-100 text-sm">•</span>
-          <span className="text-orange-100 text-sm">Read-only</span>
-          <span className="text-orange-100 text-sm">•</span>
-          <span className="text-orange-100 text-sm">Data resets</span>
+          <span className="text-orange-100 text-sm">
+            Sample data — download below for the full workspace
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/download">

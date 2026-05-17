@@ -7,7 +7,6 @@ import { SummaryEditor } from "./summary-editor";
 import { ProcessingPanel } from "./processing-panel";
 import { BibTeXDisplay } from "./bibtex-display";
 import { AbstractCard } from "./abstract-card";
-import { PDFDownloadCard } from "./pdf-download-card";
 import { CitationsSection } from "./citations-section";
 import { DeletePaperButton } from "./delete-paper-button";
 import { TagsSection } from "./tags-section";
@@ -169,41 +168,22 @@ export default async function PaperDetailPage({ params, searchParams }: PageProp
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Metadata
               </h2>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Authors</dt>
-                  <dd className="text-sm text-gray-900 mt-1">
-                    {paper.authors || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Year</dt>
-                  <dd className="text-sm text-gray-900 mt-1">
-                    {paper.year || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">DOI</dt>
-                  <dd className="text-sm text-gray-900 mt-1">
-                    {paper.doi || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    arXiv ID
-                  </dt>
-                  <dd className="text-sm text-gray-900 mt-1">
-                    {paper.arxivId || "—"}
-                  </dd>
-                </div>
-              </dl>
+              <p className="text-sm text-gray-900">
+                {(() => {
+                  let firstName = "—";
+                  if (paper.authors) {
+                    try {
+                      const arr = JSON.parse(paper.authors);
+                      firstName = Array.isArray(arr) ? (arr[0]?.name ?? "—") : paper.authors;
+                    } catch {
+                      firstName = paper.authors.split(",")[0].trim();
+                    }
+                  }
+                  return paper.year ? `${firstName} · ${paper.year}` : firstName;
+                })()}
+              </p>
             </div>
 
-            {/* PDF Download (compact) */}
-            <PDFDownloadCard
-              paperId={paper.id}
-              fileName={paper.originalFileName}
-            />
           </div>
         </div>
 

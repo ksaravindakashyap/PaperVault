@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { extractMetadata } from "@/lib/extraction/extract";
 import { generateBibTeX } from "@/lib/citations/bibtex";
+import { embedPaper } from "@/lib/embeddings";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -113,9 +114,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
         },
       });
 
+      // Generate embedding in background (non-blocking)
+      let embeddingGenerated = false;
+      try {
+        const vec = await embedPaper(updatedPaper);
+        const vecLiteral = `[${vec.join(",")}]`;
+        await db.$executeRaw`
+          UPDATE "Paper"
+          SET embedding = ${vecLiteral}::vector,
+              "embeddingStatus" = 'DONE',
+              "embeddedAt" = NOW()
+          WHERE id = ${id}
+        `;
+        embeddingGenerated = true;
+      } catch {
+        await db.paper.update({
+          where: { id },
+          data: { embeddingStatus: "FAILED" },
+        });
+      }
+
       return NextResponse.json({
         success: true,
         status: updatedPaper.status,
+        embeddingGenerated,
         metadata: {
           title: metadata.title,
           authors: metadata.authors,

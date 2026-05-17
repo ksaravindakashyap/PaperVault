@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(New-Item -ItemType Directory -Force \"F:\\\\Projects\\\\PaperVault\\\\src\\\\app\\\\api\\\\papers\\\\[id]\")",
+      "Bash(Out-Null)",
+      "Bash(Write-Output \"done\")"
+    ]
+  }
+}

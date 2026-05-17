@@ -1,58 +1,62 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
 }
 
 model Paper {
   id               String      @id @default(cuid())
-  fileKey          String      // relative path: data/uploads/<id>.pdf
+  fileKey          String
   originalFileName String
   venueType        VenueType
   status           PaperStatus @default(PROCESSING)
   workspaceId      String
 
   title     String?
-  authors   String? // raw string for now
+  authors   String?
   year      Int?
   doi       String?
   arxivId   String?
   abstract  String?
-  summary   String? // plain text summary space (Step 1)
-  bibtex    String? // generated BibTeX
-  
+  summary   String?
+  bibtex    String?
+
   // Processing fields
   processingLockedAt  DateTime?
   processingLockedBy  String?
-  processingAttempts  Int      @default(0)
+  processingAttempts  Int       @default(0)
   lastProcessingError String?
   processedAt         DateTime?
-  
+
   // Venue mismatch detection
-  detectedVenueType   VenueType?
-  venueMismatchNote   String?
-  
+  detectedVenueType VenueType?
+  venueMismatchNote String?
+
   // Citation extraction
-  citationsExtractedAt DateTime?
-  citationsStatus      String?  // "NOT_STARTED" | "DONE" | "FAILED"
-  citationsError       String?
-  citationsCount       Int?
-  citationsScannedPages String? // e.g., "1,2,3,4,5" for debug/display
-  
+  citationsExtractedAt  DateTime?
+  citationsStatus       String?
+  citationsError        String?
+  citationsCount        Int?
+  citationsScannedPages String?
+
+  // Semantic embedding (pgvector) — 1024-dim from nvidia/nv-embedqa-e5-v5
+  embedding       Unsupported("vector(1024)")?
+  embeddingStatus String?   // "PENDING" | "DONE" | "FAILED"
+  embeddedAt      DateTime?
+
   // Relations
-  workspace         Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  citations         Citation[] @relation("SourcePaper")
-  citedBy           Citation[] @relation("CitationTarget")
-  projects          ProjectPaper[]
-  docs              Doc[]
-  tags              PaperTag[]
-  
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  citations    Citation[]     @relation("SourcePaper")
+  citedBy      Citation[]     @relation("CitationTarget")
+  projects     ProjectPaper[]
+  docs         Doc[]
+  tags         PaperTag[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -61,30 +65,31 @@ model Paper {
   @@index([createdAt])
   @@index([doi])
   @@index([arxivId])
+  @@index([embeddingStatus])
 }
 
 model Citation {
-  id              String   @id @default(cuid())
-  workspaceId     String
-  sourcePaperId   String
-  sourcePaper     Paper    @relation("SourcePaper", fields: [sourcePaperId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  workspaceId   String
+  sourcePaperId String
+  sourcePaper   Paper   @relation("SourcePaper", fields: [sourcePaperId], references: [id], onDelete: Cascade)
 
-  raw             String
-  title           String?
-  authors         String?
-  year            Int?
-  venue           String?
-  doi             String?
-  arxivId         String?
-  url             String?
+  raw     String
+  title   String?
+  authors String?
+  year    Int?
+  venue   String?
+  doi     String?
+  arxivId String?
+  url     String?
 
-  targetPaperId   String?
-  targetPaper     Paper?   @relation("CitationTarget", fields: [targetPaperId], references: [id])
+  targetPaperId String?
+  targetPaper   Paper?  @relation("CitationTarget", fields: [targetPaperId], references: [id])
 
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([sourcePaperId])
@@ -153,33 +158,33 @@ model Project {
   id              String   @id @default(cuid())
   name            String
   description     String?
-  notes           String?  // Simple text notes for the project
+  notes           String?
   createdByUserId String?
   workspaceId     String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   papers      ProjectPaper[]
   members     ProjectMember[]
   invites     ProjectInvite[]
   docs        Doc[]
   todos       Todo[]
   auditEvents AuditEvent[]
-  
+
   @@index([workspaceId])
   @@index([name])
 }
 
 model ProjectMember {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   projectId String
   userId    String
   role      ProjectRole @default(COMMENTER)
-  createdAt DateTime @default(now())
+  createdAt DateTime    @default(now())
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([projectId])
@@ -187,14 +192,14 @@ model ProjectMember {
 }
 
 model ProjectInvite {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   projectId String
-  token     String   @unique
+  token     String      @unique
   role      ProjectRole @default(COMMENTER)
   expiresAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime    @default(now())
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
@@ -203,21 +208,20 @@ model Doc {
   id          String   @id @default(cuid())
   workspaceId String
   projectId   String
-  paperId     String?  // optional, for paper summary docs
+  paperId     String?
   title       String
-  content     String   // markdown/plaintext
+  content     String
   createdBy   String
   updatedBy   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  paper       Paper?    @relation(fields: [paperId], references: [id], onDelete: SetNull)
-
-  comments    Comment[]
-  events      AuditEvent[]
-  tags        DocTag[]
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paper     Paper?     @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  comments  Comment[]
+  events    AuditEvent[]
+  tags      DocTag[]
 
   @@index([workspaceId])
   @@index([projectId])
@@ -233,8 +237,8 @@ model Comment {
   anchorEnd   Int?
   createdAt   DateTime @default(now())
 
-  doc       Doc  @relation(fields: [docId], references: [id], onDelete: Cascade)
-  author    User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  doc    Doc  @relation(fields: [docId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([docId])
 }
@@ -244,13 +248,13 @@ model AuditEvent {
   projectId String
   docId     String?
   actorId   String
-  action    String   // "DOC_UPDATED", "COMMENT_ADDED", "MEMBER_ADDED", etc.
-  metadata  String?  // JSON string
+  action    String
+  metadata  String?
   createdAt DateTime @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  actor   User    @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  doc     Doc?    @relation(fields: [docId], references: [id], onDelete: SetNull)
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  doc     Doc?     @relation(fields: [docId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([docId])
@@ -264,14 +268,13 @@ model Todo {
   dueDate     DateTime
   status      TodoStatus @default(OPEN)
   notes       String?
-
   createdBy   String
   updatedBy   String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
   @@index([projectId])
@@ -285,8 +288,8 @@ model ProjectPaper {
   paperId   String
   createdAt DateTime @default(now())
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  paper     Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paper   Paper   @relation(fields: [paperId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, paperId])
   @@index([projectId])
@@ -300,9 +303,9 @@ model Tag {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  paperTags   PaperTag[]
-  docTags     DocTag[]
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  paperTags PaperTag[]
+  docTags   DocTag[]
 
   @@unique([workspaceId, name])
   @@index([workspaceId])
@@ -314,8 +317,8 @@ model PaperTag {
   paperId String
   tagId   String
 
-  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
-  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  paper Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([paperId, tagId])
   @@index([paperId])
@@ -327,8 +330,8 @@ model DocTag {
   docId String
   tagId String
 
-  doc   Doc @relation(fields: [docId], references: [id], onDelete: Cascade)
-  tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  doc Doc @relation(fields: [docId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([docId, tagId])
   @@index([docId])
@@ -341,14 +344,15 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   WorkspaceMember[]
-  invites   WorkspaceInvite[]
-  papers    Paper[]
-  projects  Project[]
-  docs      Doc[]
-  todos     Todo[]
-  tags      Tag[]
-  citations Citation[]
+  members        WorkspaceMember[]
+  invites        WorkspaceInvite[]
+  papers         Paper[]
+  projects       Project[]
+  docs           Doc[]
+  todos          Todo[]
+  tags           Tag[]
+  citations      Citation[]
+  searchSessions SearchSession[]
 
   @@index([name])
 }
@@ -382,4 +386,78 @@ model WorkspaceInvite {
 
   @@index([workspaceId])
   @@index([expiresAt])
+}
+
+model ExternalPaper {
+  id                String  @id @default(cuid())
+  semanticScholarId String? @unique
+  arxivId           String?
+  doi               String?
+
+  title                    String
+  authors                  String
+  year                     Int?
+  venue                    String?
+  venueType                VenueType?
+  abstract                 String?
+  citationCount            Int?
+  influentialCitationCount Int?
+  publicationDate          String?
+
+  s2FieldsOfStudy String?
+  tldr            String?
+
+  // Semantic embedding (pgvector)
+  embedding       Unsupported("vector(1024)")?
+  embeddingStatus String?
+  embeddedAt      DateTime?
+
+  firstSeenAt   DateTime @default(now())
+  lastFetchedAt DateTime @updatedAt
+
+  searchSessions SearchSessionPaper[]
+
+  @@index([semanticScholarId])
+  @@index([arxivId])
+  @@index([doi])
+  @@index([venue])
+  @@index([year])
+  @@index([embeddingStatus])
+}
+
+model SearchSession {
+  id          String @id @default(cuid())
+  workspaceId String
+  userId      String
+
+  originalQuery   String
+  decomposedQuery String
+
+  resultCount    Int
+  topVenues      String?
+  topYears       String?
+  trendingTopics String?
+
+  createdAt DateTime @default(now())
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  papers    SearchSessionPaper[]
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model SearchSessionPaper {
+  id              String @id @default(cuid())
+  sessionId       String
+  externalPaperId String
+  rank            Int
+  relevanceScore  Float?
+
+  session SearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  paper   ExternalPaper @relation(fields: [externalPaperId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, externalPaperId])
+  @@index([sessionId])
 }

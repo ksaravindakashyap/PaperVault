@@ -2,6 +2,7 @@ import { VenueType } from "@prisma/client";
 import { extractPDFText, getLines } from "./pdfText";
 import { getProfileForVenue, ExtractionProfile } from "./profiles";
 import { detectVenueFromText, generateMismatchNote } from "./detectVenue";
+import { agenticExtractMetadata } from "./agenticExtract";
 
 export interface ExtractedMetadata {
   title?: string;
@@ -39,8 +40,8 @@ export async function extractMetadata(
 ): Promise<ExtractedMetadata> {
   const signals: string[] = [];
 
-  // Extract PDF text (limited to first 2 pages for speed)
-  const pdfResult = await extractPDFText(fileKey, { firstPages: 2, lastPages: 0 });
+  // Extract PDF text — use 3 pages now so the agentic agent has enough context
+  const pdfResult = await extractPDFText(fileKey, { firstPages: 3, lastPages: 0 });
   signals.push(`Extracted ${pdfResult.pagesExtracted} of ${pdfResult.numPages} pages`);
 
   const text = pdfResult.firstPages;
@@ -61,23 +62,40 @@ export async function extractMetadata(
 
   const profile = getProfileForVenue(profileVenue);
 
-  // Extract DOI
-  const doi = extractDOI(text, profile, signals);
+  // ── Agentic extraction (primary) ──────────────────────────────────────────
+  // Use the LLM agent with multi-step self-validation. Falls back to regex below
+  // if the agent returns low confidence.
+  let agenticResult: Awaited<ReturnType<typeof agenticExtractMetadata>> | null = null;
+  try {
+    agenticResult = await agenticExtractMetadata(text, profileVenue);
+    signals.push(
+      `Agentic extraction: confidence=${agenticResult.confidence}, source=${agenticResult.source}`
+    );
+    if (agenticResult.validationNotes.length > 0) {
+      signals.push(...agenticResult.validationNotes.map((n) => `  [agent] ${n}`));
+    }
+  } catch (err) {
+    signals.push(`Agentic extraction failed: ${err} — falling back to regex`);
+  }
 
-  // Extract arXiv ID
-  const arxivId = extractArXivId(text, profile, signals);
+  // ── Regex extraction (fallback / supplement) ──────────────────────────────
+  const doi_regex = extractDOI(text, profile, signals);
+  const arxivId_regex = extractArXivId(text, profile, signals);
+  const abstract_regex = extractAbstract(text, profile, signals);
+  const title_regex = extractTitle(lines, profile, signals);
+  const authors_regex = extractAuthors(lines, text, title_regex, profile, signals);
+  const year_regex = extractYear(text, profile, signals);
 
-  // Extract abstract
-  const abstract = extractAbstract(text, profile, signals);
+  // ── Merge: prefer agentic where confident, supplement with regex ──────────
+  const useAgentic = agenticResult && agenticResult.confidence !== "low";
 
-  // Extract title
-  const title = extractTitle(lines, profile, signals);
-
-  // Extract authors (pass title for anchoring)
-  const authors = extractAuthors(lines, text, title, profile, signals);
-
-  // Extract year
-  const year = extractYear(text, profile, signals);
+  const title = (useAgentic && agenticResult?.title) ? agenticResult.title : title_regex;
+  const authors = (useAgentic && agenticResult?.authors) ? agenticResult.authors : authors_regex;
+  const abstract = (useAgentic && agenticResult?.abstract) ? agenticResult.abstract : abstract_regex;
+  const year = (useAgentic && agenticResult?.year) ? agenticResult.year : year_regex;
+  // For DOI / arXiv ID, prefer regex (more precise pattern matching) but fall back to agent
+  const doi = doi_regex || (useAgentic ? agenticResult?.doi : undefined);
+  const arxivId = arxivId_regex || (useAgentic ? agenticResult?.arxivId : undefined);
 
   // Generate mismatch note if needed
   let mismatchNote: string | undefined;

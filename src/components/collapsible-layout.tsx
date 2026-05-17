@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
+import { AgenticSearchDialog } from "@/components/agentic-search-dialog";
 import { getSidebarPrefs, setSidebarPrefs } from "@/lib/ui/sidebarPrefs";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -64,6 +65,7 @@ export function CollapsibleLayout({ children }: CollapsibleLayoutProps) {
         </div>
         <Header onToggleSidebar={handleToggleSidebar} sidebarCollapsed={false} />
         <main className="flex-1 overflow-auto">{children}</main>
+      <AgenticSearchDialog showTrigger={false} />
       </div>
     );
   }
@@ -86,6 +88,8 @@ export function CollapsibleLayout({ children }: CollapsibleLayoutProps) {
         />
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
+      {/* Global AI search dialog — triggered by header search bar from any page */}
+      <AgenticSearchDialog showTrigger={false} />
     </div>
   );
 }

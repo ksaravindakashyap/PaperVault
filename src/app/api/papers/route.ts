@@ -16,10 +16,16 @@ export async function GET() {
       select: {
         id: true,
         title: true,
+        authors: true,
+        year: true,
         venueType: true,
         status: true,
         createdAt: true,
         originalFileName: true,
+        embeddingStatus: true,
+        fileKey: true,
+        arxivId: true,
+        doi: true,
       },
     });
 

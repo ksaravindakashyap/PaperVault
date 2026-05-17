@@ -138,7 +138,9 @@ export default function SearchPage() {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Search</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Search your library</h1>
+        </div>
 
         {/* Search Bar */}
         <div className="mb-6">
@@ -152,6 +154,9 @@ export default function SearchPage() {
               autoFocus
             />
           </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Searching your uploaded papers, docs, and todos. Use the header search bar for AI-powered discovery.
+          </p>
         </div>
 
         {/* Filters */}
