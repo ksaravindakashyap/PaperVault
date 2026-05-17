@@ -13,10 +13,16 @@
  */
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_NIM_API_KEY,
-  baseURL: process.env.NVIDIA_NIM_BASE_URL,
-});
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) {
+    _client = new OpenAI({
+      apiKey: process.env.NVIDIA_NIM_API_KEY,
+      baseURL: process.env.NVIDIA_NIM_BASE_URL,
+    });
+  }
+  return _client;
+}
 
 const MODEL = process.env.LLM_MODEL || "stepfun-ai/step-3.5-flash";
 
@@ -69,7 +75,7 @@ Text (first pages):
 ${text.slice(0, 6500)}
 ===`;
 
-  const res = await client.chat.completions.create({
+  const res = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
       { role: "system", content: "You are a precise scientific metadata extractor. Return only valid JSON, no explanations." },
@@ -171,7 +177,7 @@ Text:
 ${sourceText.slice(0, 7000)}
 ===`;
 
-  const res = await client.chat.completions.create({
+  const res = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
       { role: "system", content: "You are a precise field extractor. Return only valid JSON with just the requested fields." },
